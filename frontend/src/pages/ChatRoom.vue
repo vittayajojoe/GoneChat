@@ -340,12 +340,26 @@ const setupSocketListeners = (socket) => {
   });
 };
 
-const joinCurrentRoom = async (nicknameToUse) => {
+const joinCurrentRoom = async (nicknameToUse, retryCount = 0) => {
   const socket = wsService.connect();
   setupSocketListeners(socket);
 
+  // Wait for socket to connect
+  if (!socket.connected) {
+    console.log('[ChatRoom] Waiting for socket connection...');
+    await new Promise((resolve) => {
+      if (socket.connected) {
+        resolve();
+      } else {
+        socket.once('connect', resolve);
+        setTimeout(resolve, 5000); // Timeout after 5s
+      }
+    });
+  }
+
   const ownerToken = sessionStorage.getItem(`ownerToken_${roomId.value}`);
 
+  console.log('[ChatRoom] Joining room:', roomId.value);
   const res = await wsService.joinRoom({
     roomId: roomId.value,
     nickname: nicknameToUse,
@@ -353,6 +367,7 @@ const joinCurrentRoom = async (nicknameToUse) => {
   });
 
   if (res && res.success) {
+    console.log('[ChatRoom] Joined successfully');
     roomInfo.value = res;
     userList.value = res.users || [];
     if (res.recentMessages && res.recentMessages.length > 0) {
@@ -360,6 +375,15 @@ const joinCurrentRoom = async (nicknameToUse) => {
     }
     scrollToBottom();
   } else {
+    console.error('[ChatRoom] Join failed:', res?.error);
+    
+    // Retry once if failed
+    if (retryCount < 1) {
+      console.log('[ChatRoom] Retrying join...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return joinCurrentRoom(nicknameToUse, retryCount + 1);
+    }
+    
     joinError.value = res?.error || 'เกิดข้อผิดพลาดในการเข้าร่วมห้อง';
     isRoomDestroyed.value = true;
     destructionReason.value = 'error';

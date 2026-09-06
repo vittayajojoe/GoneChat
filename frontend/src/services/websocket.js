@@ -27,9 +27,12 @@ class WebSocketService {
       this.socket = io(backendUrl || undefined, {
         transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
         reconnectionDelay: 1000,
-        timeout: 10000
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        forceNew: false,
+        autoConnect: true
       });
 
       // Connection event listeners
@@ -41,8 +44,24 @@ class WebSocketService {
         console.error('[WebSocket] Connection error:', error.message);
       });
 
+      this.socket.on('reconnect', (attemptNumber) => {
+        console.log('[WebSocket] Reconnected after', attemptNumber, 'attempts');
+      });
+
+      this.socket.on('reconnect_attempt', (attemptNumber) => {
+        console.log('[WebSocket] Reconnection attempt', attemptNumber);
+      });
+
+      this.socket.on('reconnect_failed', () => {
+        console.error('[WebSocket] Reconnection failed');
+      });
+
       this.socket.on('disconnect', (reason) => {
         console.log('[WebSocket] Disconnected:', reason);
+        if (reason === 'io server disconnect') {
+          // Server disconnected, need to reconnect manually
+          this.socket.connect();
+        }
       });
 
       this.socket.on('error', (error) => {
@@ -141,7 +160,9 @@ class WebSocketService {
 
   sendMessage({ roomId, text, image }) {
     console.log('[WebSocket] Sending message:', { roomId, hasText: !!text, hasImage: !!image });
-    return this.emitWithTimeout('send_message', { roomId, text, image }, 10000);
+    // Increase timeout for images
+    const timeout = image ? 30000 : 10000;
+    return this.emitWithTimeout('send_message', { roomId, text, image }, timeout);
   }
 
   viewImage({ roomId, messageId }) {

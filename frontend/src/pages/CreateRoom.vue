@@ -155,15 +155,23 @@ const handleCreate = async () => {
   showConfigPrompt.value = false;
 
   try {
+    console.log('[CreateRoom] Creating room...');
     const res = await wsService.createRoomHttp({
       ttl: selectedTTL.value,
       nickname: nickname.value.trim()
     });
 
+    console.log('[CreateRoom] Response:', res);
+
     if (res && res.success) {
       sessionStorage.setItem(`ownerToken_${res.roomId}`, res.ownerToken);
       sessionStorage.setItem('preferred_nickname', nickname.value.trim());
 
+      console.log('[CreateRoom] Navigating to room:', res.roomId);
+      
+      // Wait a bit before navigating to ensure backend is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       router.push(`/r/${res.roomId}`);
     } else {
       errorMessage.value = res?.error || 'เกิดข้อผิดพลาดในการสร้างห้อง กรุณาลองใหม่อีกครั้ง';
@@ -172,6 +180,7 @@ const handleCreate = async () => {
       }
     }
   } catch (err) {
+    console.error('[CreateRoom] Error:', err);
     errorMessage.value = 'ไม่สามารถติดต่อเซิร์ฟเวอร์ Backend ได้';
     showConfigPrompt.value = true;
   } finally {

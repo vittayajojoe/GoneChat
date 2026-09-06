@@ -61,6 +61,7 @@
 <script setup>
 import { ref, nextTick } from 'vue';
 import { Send, ImageIcon, X } from 'lucide-vue-next';
+import imageCompression from 'browser-image-compression';
 
 const props = defineProps({
   disabled: {
@@ -76,6 +77,7 @@ const textareaRef = ref(null);
 const fileInput = ref(null);
 const selectedImage = ref(null);
 const selectedImageData = ref(null);
+const isCompressing = ref(false);
 
 let typingTimer = null;
 let isCurrentlyTyping = false;
@@ -88,23 +90,47 @@ const handleImageSelect = async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
 
-  // Check file size (max 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    alert('รูปภาพใหญ่เกินไป (ขนาดสูงสุด 5MB)');
-    return;
-  }
+  try {
+    isCompressing.value = true;
 
-  // Convert to base64
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    selectedImage.value = e.target.result;
-    selectedImageData.value = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      selectedImage.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
 
-  // Reset file input
-  if (fileInput.value) {
-    fileInput.value.value = '';
+    // Compress image
+    const options = {
+      maxSizeMB: 0.5,              // Max 500KB
+      maxWidthOrHeight: 1920,      // Max dimension
+      useWebWorker: true,
+      fileType: file.type,
+      initialQuality: 0.8          // Good quality
+    };
+
+    const compressedFile = await imageCompression(file, options);
+    console.log('[ImageCompress] Original:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+    console.log('[ImageCompress] Compressed:', (compressedFile.size / 1024 / 1024).toFixed(2), 'MB');
+
+    // Convert compressed file to base64
+    const compressedReader = new FileReader();
+    compressedReader.onload = (e) => {
+      selectedImageData.value = e.target.result;
+      selectedImage.value = e.target.result; // Update preview with compressed version
+    };
+    compressedReader.readAsDataURL(compressedFile);
+
+  } catch (err) {
+    console.error('Image compression error:', err);
+    alert('ไม่สามารถบีบอัดรูปภาพได้ กรุณาลองอีกครั้ง');
+    clearImage();
+  } finally {
+    isCompressing.value = false;
+    // Reset file input
+    if (fileInput.value) {
+      fileInput.value.value = '';
+    }
   }
 };
 
@@ -144,6 +170,11 @@ const handleKeyDown = (e) => {
 };
 
 const handleSubmit = () => {
+  if (isCompressing.value) {
+    alert('กำลังบีบอัดรูปภาพ กรุณารอสักครู่...');
+    return;
+  }
+
   const content = text.value.trim();
   const hasImage = !!selectedImageData.value;
   
