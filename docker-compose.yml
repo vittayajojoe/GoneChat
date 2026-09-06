@@ -1,0 +1,32 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: gonechat-server
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - CORS_ORIGIN=*
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - gonechat-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gonechat-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - gonechat-network
+
+networks:
+  gonechat-network:
+    driver: bridge
