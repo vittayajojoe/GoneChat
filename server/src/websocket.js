@@ -95,6 +95,8 @@ export function setupWebSocket(httpServer) {
     // 3. Send Message
     socket.on('send_message', (data, callback) => {
       try {
+        safeLog.info('Received send_message event', { socketId: socket.id, roomId: data?.roomId });
+        
         // Rate limiting check
         if (rateLimiter.isRateLimited(socket.id)) {
           if (typeof callback === 'function') {
@@ -106,6 +108,7 @@ export function setupWebSocket(httpServer) {
         const { roomId, text } = data || {};
         const validation = validateMessage(text);
         if (!validation.valid) {
+          safeLog.warn('Invalid message', { socketId: socket.id, error: validation.error });
           if (typeof callback === 'function') {
             callback({ success: false, error: validation.error });
           }
@@ -114,6 +117,7 @@ export function setupWebSocket(httpServer) {
 
         const message = roomManager.addMessage(roomId, socket.id, validation.text);
         if (!message) {
+          safeLog.warn('Failed to add message', { socketId: socket.id, roomId });
           if (typeof callback === 'function') {
             callback({ success: false, error: 'Room no longer exists or you are not in this room' });
           }
@@ -121,6 +125,7 @@ export function setupWebSocket(httpServer) {
         }
 
         // Broadcast message to everyone in room (including sender)
+        safeLog.info('Broadcasting message', { roomId, messageId: message.id, recipients: io.sockets.adapter.rooms.get(roomId)?.size });
         io.to(roomId).emit('new_message', message);
 
         if (typeof callback === 'function') {
