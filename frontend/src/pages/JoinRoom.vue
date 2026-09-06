@@ -8,7 +8,41 @@
       <div class="w-9"></div>
     </header>
 
-    <main class="space-y-6 flex-1 flex flex-col justify-center">
+    <main class="space-y-5 flex-1 flex flex-col justify-center">
+      <!-- QR Code Scanner / Upload Options -->
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          @click="startCamera"
+          class="flex flex-col items-center justify-center gap-2 p-4 bg-slate-900 border border-slate-800 hover:border-rose-500 rounded-2xl transition-colors"
+        >
+          <Camera class="w-6 h-6 text-rose-400" />
+          <span class="text-xs font-semibold text-slate-300">สแกน QR</span>
+        </button>
+        
+        <button
+          @click="triggerFileUpload"
+          class="flex flex-col items-center justify-center gap-2 p-4 bg-slate-900 border border-slate-800 hover:border-rose-500 rounded-2xl transition-colors"
+        >
+          <Upload class="w-6 h-6 text-rose-400" />
+          <span class="text-xs font-semibold text-slate-300">อัพโหลด QR</span>
+        </button>
+      </div>
+
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        @change="handleFileUpload"
+        class="hidden"
+      />
+
+      <!-- Divider -->
+      <div class="flex items-center gap-3">
+        <div class="flex-1 h-px bg-slate-800"></div>
+        <span class="text-xs text-slate-500">หรือ</span>
+        <div class="flex-1 h-px bg-slate-800"></div>
+      </div>
+
       <!-- Room ID / Link Input -->
       <div class="space-y-2">
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -53,6 +87,12 @@
         <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
         <span>{{ errorMessage }}</span>
       </div>
+
+      <!-- Success message -->
+      <div v-if="successMessage" class="p-3.5 bg-emerald-950/70 border border-emerald-800/80 text-emerald-200 text-xs rounded-2xl leading-relaxed flex items-center gap-2">
+        <CheckCircle class="w-4 h-4 shrink-0 text-emerald-400" />
+        <span>{{ successMessage }}</span>
+      </div>
     </main>
 
     <footer class="pt-6 pb-2">
@@ -66,14 +106,38 @@
         <span>{{ isSubmitting ? 'กำลังตรวจสอบห้อง...' : 'เข้าสู่ห้องแชท' }}</span>
       </button>
     </footer>
+
+    <!-- Camera Scanner Modal -->
+    <div v-if="showCamera" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90">
+      <div class="w-full max-w-md bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+          <h3 class="font-bold text-slate-100">สแกน QR Code</h3>
+          <button @click="stopCamera" class="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div class="relative aspect-square bg-slate-950">
+          <video ref="videoElement" autoplay playsinline class="w-full h-full object-cover"></video>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-64 h-64 border-2 border-rose-500 rounded-2xl"></div>
+          </div>
+        </div>
+        
+        <div class="p-4">
+          <p class="text-xs text-slate-400 text-center">วาง QR Code ให้อยู่ในกรอบสี่เหลี่ยม</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft, Dices, LogIn, AlertCircle } from 'lucide-vue-next';
+import { ArrowLeft, Dices, LogIn, AlertCircle, Camera, Upload, X, CheckCircle } from 'lucide-vue-next';
 import { generateRandomNickname } from '../services/nickname.js';
+import { BrowserQRCodeReader } from '@zxing/library';
 
 const router = useRouter();
 
@@ -81,6 +145,13 @@ const roomInput = ref('');
 const nickname = ref('');
 const isSubmitting = ref(false);
 const errorMessage = ref('');
+const successMessage = ref('');
+const showCamera = ref(false);
+const videoElement = ref(null);
+const fileInput = ref(null);
+
+let codeReader = null;
+let stream = null;
 
 const randomizeNickname = () => {
   nickname.value = generateRandomNickname();
@@ -95,6 +166,10 @@ onMounted(() => {
   }
 });
 
+onUnmounted(() => {
+  stopCamera();
+});
+
 const extractRoomId = (input) => {
   const clean = input.trim();
   if (clean.includes('/r/')) {
@@ -104,10 +179,100 @@ const extractRoomId = (input) => {
   return clean;
 };
 
+const startCamera = async () => {
+  try {
+    errorMessage.value = '';
+    successMessage.value = '';
+    showCamera.value = true;
+
+    // Wait for next tick to ensure video element is mounted
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    if (!videoElement.value) {
+      errorMessage.value = 'ไม่สามารถเปิดกล้องได้';
+      showCamera.value = false;
+      return;
+    }
+
+    codeReader = new BrowserQRCodeReader();
+    
+    const result = await codeReader.decodeFromVideoDevice(
+      undefined,
+      videoElement.value,
+      (result, error) => {
+        if (result) {
+          const url = result.getText();
+          const roomId = extractRoomId(url);
+          if (roomId) {
+            roomInput.value = roomId;
+            successMessage.value = `สแกนสำเร็จ! ห้อง: ${roomId}`;
+            stopCamera();
+          }
+        }
+      }
+    );
+  } catch (err) {
+    console.error('Camera error:', err);
+    errorMessage.value = 'ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตการใช้กล้อง';
+    showCamera.value = false;
+  }
+};
+
+const stopCamera = () => {
+  if (codeReader) {
+    codeReader.reset();
+    codeReader = null;
+  }
+  showCamera.value = false;
+};
+
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    errorMessage.value = '';
+    successMessage.value = '';
+    isSubmitting.value = true;
+
+    const reader = new BrowserQRCodeReader();
+    const img = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const result = await reader.decodeFromCanvas(canvas);
+    const url = result.getText();
+    const roomId = extractRoomId(url);
+    
+    if (roomId) {
+      roomInput.value = roomId;
+      successMessage.value = `อ่าน QR Code สำเร็จ! ห้อง: ${roomId}`;
+    } else {
+      errorMessage.value = 'ไม่พบรหัสห้องใน QR Code นี้';
+    }
+  } catch (err) {
+    console.error('QR decode error:', err);
+    errorMessage.value = 'ไม่สามารถอ่าน QR Code จากรูปนี้ได้ กรุณาลองใหม่';
+  } finally {
+    isSubmitting.value = false;
+    // Reset file input
+    if (fileInput.value) {
+      fileInput.value.value = '';
+    }
+  }
+};
+
 const handleJoin = async () => {
   const cleanRoomId = extractRoomId(roomInput.value);
   if (!cleanRoomId) {
-    errorMessage.value = 'กรุณาระบุรหัสห้อง หรือวางลิงก์คำเชิญ';
+    errorMessage.value = 'กรุณาระบุรหัสห้อง หรือวางลิงก์คำเชิญ หรือสแกน QR Code';
     return;
   }
 
@@ -118,6 +283,7 @@ const handleJoin = async () => {
 
   isSubmitting.value = true;
   errorMessage.value = '';
+  successMessage.value = '';
 
   try {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
