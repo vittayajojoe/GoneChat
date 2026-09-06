@@ -22,12 +22,31 @@ class WebSocketService {
   connect() {
     if (!this.socket) {
       const backendUrl = this.getBackendUrl();
+      console.log('[WebSocket] Connecting to:', backendUrl || 'default');
+      
       this.socket = io(backendUrl || undefined, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
         timeout: 10000
+      });
+
+      // Connection event listeners
+      this.socket.on('connect', () => {
+        console.log('[WebSocket] Connected! Socket ID:', this.socket.id);
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.error('[WebSocket] Connection error:', error.message);
+      });
+
+      this.socket.on('disconnect', (reason) => {
+        console.log('[WebSocket] Disconnected:', reason);
+      });
+
+      this.socket.on('error', (error) => {
+        console.error('[WebSocket] Socket error:', error);
       });
     }
     return this.socket;
@@ -116,15 +135,18 @@ class WebSocketService {
   }
 
   joinRoom({ roomId, nickname, ownerToken }) {
+    console.log('[WebSocket] Joining room:', { roomId, nickname, hasOwnerToken: !!ownerToken });
     return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken }, 10000);
   }
 
   sendMessage({ roomId, text }) {
+    console.log('[WebSocket] Sending message:', { roomId, text });
     return this.emitWithTimeout('send_message', { roomId, text }, 6000);
   }
 
   sendTyping({ roomId, isTyping }) {
     const socket = this.getSocket();
+    console.log('[WebSocket] Sending typing:', { roomId, isTyping });
     socket.emit('typing', { roomId, isTyping });
   }
 
