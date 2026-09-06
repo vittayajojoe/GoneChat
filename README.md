@@ -62,7 +62,7 @@ GoneChat/
 
 ## 🚀 วิธีการติดตั้งและรันระบบ (Quick Start)
 
-### วิธีที่ 1: รันด้วย Docker Compose (แนะนำ)
+### วิธีที่ 1: รันด้วย Docker Compose (แนะนำสำหรับ Self-Hosting)
 
 คำสั่งเดียวเพื่อ build และรันทั้ง Backend และ Frontend ผ่าน Nginx Reverse Proxy:
 
@@ -70,7 +70,7 @@ GoneChat/
 docker compose up --build
 ```
 
-- **Frontend Web UI**: เข้าใช้งานได้ที่ [http://localhost:8080](http://localhost:8080)
+- **Frontend Web UI**: เข้าใช้งานได้ที่ [http://localhost:8082](http://localhost:8082)
 - **Backend API & Health**: [http://localhost:3000/health](http://localhost:3000/health)
 
 ---
@@ -92,6 +92,34 @@ npm install
 npm run dev
 ```
 เข้าใช้งานผ่าน Vite dev server ได้ที่ `http://localhost:5173` (โดย Vite มี Proxy ส่งต่อไปยัง Backend พอร์ต 3000 อัตโนมัติ)
+
+---
+
+## ☁️ การ Deploy บน Cloud (Production)
+
+สำหรับการ deploy บน production คุณมี 2 ส่วนที่ต้อง deploy แยกกัน:
+
+- **Frontend**: Cloudflare Pages (Static Site)
+- **Backend**: Railway, Render, Fly.io, หรือ VPS ของคุณเอง
+
+**📚 อ่านคำแนะนำแบบเต็มได้ที่**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### สรุปสั้นๆ:
+
+1. **Deploy Backend**:
+   ```bash
+   # ตัวอย่างการ deploy บน Railway
+   cd server
+   railway up
+   ```
+
+2. **Deploy Frontend** บน Cloudflare Pages:
+   - เชื่อมต่อกับ GitHub repository
+   - ตั้งค่า Build command: `cd frontend && npm install && npm run build`
+   - ตั้งค่า Build output: `frontend/dist`
+   - ตั้งค่า Environment Variable: `VITE_BACKEND_URL=https://your-backend.railway.app`
+
+3. **ตั้งค่า CORS** บน Backend ให้อนุญาต origin จาก Cloudflare Pages
 
 ---
 

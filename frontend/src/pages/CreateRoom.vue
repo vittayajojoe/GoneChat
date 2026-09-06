@@ -5,7 +5,13 @@
         <ArrowLeft class="w-5 h-5" />
       </router-link>
       <h2 class="text-lg font-bold text-slate-100">สร้างห้องแชทชั่วคราว</h2>
-      <div class="w-9"></div>
+      <button
+        @click="showServerModal = true"
+        class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        title="ตั้งค่าเซิร์ฟเวอร์ Backend"
+      >
+        <Settings class="w-5 h-5" />
+      </button>
     </header>
 
     <main class="space-y-6 flex-1 flex flex-col justify-center">
@@ -64,10 +70,22 @@
         </div>
       </div>
 
-      <!-- Error banner -->
-      <div v-if="errorMessage" class="p-3.5 bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs rounded-2xl leading-relaxed flex items-center gap-2">
-        <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
-        <span>{{ errorMessage }}</span>
+      <!-- Error banner with Setup Backend CTA -->
+      <div v-if="errorMessage" class="p-4 bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs rounded-2xl leading-relaxed space-y-2">
+        <div class="flex items-center gap-2 font-medium">
+          <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div v-if="showConfigPrompt" class="pt-1">
+          <button
+            type="button"
+            @click="showServerModal = true"
+            class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <Settings class="w-3.5 h-3.5" />
+            <span>กดตรงนี้เพื่อระบุ Server URL</span>
+          </button>
+        </div>
       </div>
     </main>
 
@@ -82,15 +100,23 @@
         <span>{{ isSubmitting ? 'กำลังสร้างห้อง...' : 'เปิดห้องแชท' }}</span>
       </button>
     </footer>
+
+    <!-- Server Settings Modal -->
+    <ServerSettingsModal
+      :show="showServerModal"
+      @close="showServerModal = false"
+      @saved="handleServerSaved"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft, Dices, Flame, AlertCircle } from 'lucide-vue-next';
+import { ArrowLeft, Dices, Flame, AlertCircle, Settings } from 'lucide-vue-next';
 import { generateRandomNickname } from '../services/nickname.js';
 import { wsService } from '../services/websocket.js';
+import ServerSettingsModal from '../components/ServerSettingsModal.vue';
 
 const router = useRouter();
 
@@ -98,6 +124,8 @@ const nickname = ref('');
 const selectedTTL = ref(1800); // 30 mins
 const isSubmitting = ref(false);
 const errorMessage = ref('');
+const showConfigPrompt = ref(false);
+const showServerModal = ref(false);
 
 const ttlOptions = [
   { label: '5 นาที', value: 300 },
@@ -124,9 +152,9 @@ const handleCreate = async () => {
 
   isSubmitting.value = true;
   errorMessage.value = '';
+  showConfigPrompt.value = false;
 
   try {
-    // Try fast HTTP creation first with fallback to WebSocket
     const res = await wsService.createRoomHttp({
       ttl: selectedTTL.value,
       nickname: nickname.value.trim()
@@ -139,11 +167,20 @@ const handleCreate = async () => {
       router.push(`/r/${res.roomId}`);
     } else {
       errorMessage.value = res?.error || 'เกิดข้อผิดพลาดในการสร้างห้อง กรุณาลองใหม่อีกครั้ง';
+      if (res?.needsBackendUrl) {
+        showConfigPrompt.value = true;
+      }
     }
   } catch (err) {
-    errorMessage.value = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend ได้ กรุณาตรวจสอบว่าเซิร์ฟเวอร์ทำงานอยู่';
+    errorMessage.value = 'ไม่สามารถติดต่อเซิร์ฟเวอร์ Backend ได้';
+    showConfigPrompt.value = true;
   } finally {
     isSubmitting.value = false;
   }
+};
+
+const handleServerSaved = () => {
+  errorMessage.value = '';
+  showConfigPrompt.value = false;
 };
 </script>

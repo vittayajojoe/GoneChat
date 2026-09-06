@@ -6,13 +6,23 @@ class WebSocketService {
   }
 
   getBackendUrl() {
-    return import.meta.env.VITE_BACKEND_URL || '';
+    return localStorage.getItem('gonechat_backend_url') || import.meta.env.VITE_BACKEND_URL || '';
+  }
+
+  setBackendUrl(url) {
+    const clean = url ? url.trim().replace(/\/+$/, '') : '';
+    if (clean) {
+      localStorage.setItem('gonechat_backend_url', clean);
+    } else {
+      localStorage.removeItem('gonechat_backend_url');
+    }
+    this.disconnect();
   }
 
   connect() {
     if (!this.socket) {
       const backendUrl = this.getBackendUrl();
-      this.socket = io(backendUrl, {
+      this.socket = io(backendUrl || undefined, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
@@ -74,6 +84,14 @@ class WebSocketService {
       });
       clearTimeout(timeoutId);
 
+      if (res.status === 405) {
+        return {
+          success: false,
+          needsBackendUrl: true,
+          error: 'ยังไม่ได้เชื่อมต่อเซิร์ฟเวอร์ Backend (บน Cloudflare เป็นเพียงหน้าเว็บ ต้องระบุ URL ของ Node.js Server)'
+        };
+      }
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         return { success: false, error: errorData.error || `HTTP ${res.status}: ไม่สามารถสร้างห้องได้` };
@@ -84,8 +102,12 @@ class WebSocketService {
       if (err.name === 'AbortError') {
         return { success: false, error: 'เชื่อมต่อไปยัง Backend ไม่สำเร็จ (หมดเวลาการเชื่อมต่อ)' };
       }
-      // Fallback to WebSocket emit if HTTP route fails
-      return this.createRoom({ ttl, nickname, maxParticipants });
+      // If no backend configured or network error
+      return {
+        success: false,
+        needsBackendUrl: true,
+        error: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ Backend ได้ กรุณาระบุ Server URL'
+      };
     }
   }
 

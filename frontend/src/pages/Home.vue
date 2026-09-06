@@ -1,7 +1,17 @@
 <template>
   <div class="min-h-screen flex flex-col justify-between p-6 max-w-xl mx-auto">
     <!-- Header / Brand -->
-    <header class="pt-8 pb-4 text-center space-y-4">
+    <header class="pt-6 pb-4 text-center space-y-4 relative">
+      <div class="absolute right-0 top-6">
+        <button
+          @click="showServerModal = true"
+          class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          title="ตั้งค่าเซิร์ฟเวอร์ Backend"
+        >
+          <Settings class="w-5 h-5" />
+        </button>
+      </div>
+
       <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-slate-800/80 border border-slate-700/60 shadow-xl mb-2">
         <Flame class="w-8 h-8 text-rose-500" />
       </div>
