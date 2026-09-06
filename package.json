@@ -1,0 +1,8 @@
+{
+  "name": "gonechat-root",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build"
+  }
+}
