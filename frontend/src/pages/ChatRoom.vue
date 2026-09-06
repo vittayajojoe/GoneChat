@@ -57,9 +57,9 @@
 
         <div class="h-4 w-[1px] bg-slate-800 hidden sm:block"></div>
 
-        <div class="flex items-center gap-1.5 text-xs text-emerald-400">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="font-medium hidden xs:inline">ออนไลน์</span>
+        <div class="flex items-center gap-1.5 text-xs" :class="isConnected ? 'text-emerald-400' : 'text-amber-400'">
+          <span class="w-2 h-2 rounded-full animate-pulse" :class="isConnected ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+          <span class="font-medium hidden xs:inline">{{ isConnected ? 'ออนไลน์' : 'กำลังเชื่อมต่อ...' }}</span>
         </div>
       </div>
 
@@ -241,8 +241,12 @@ const messages = ref([]);
 const userList = ref([]);
 const roomInfo = ref(null);
 const currentSocketId = ref('');
+const isConnected = ref(false);
 const typingUser = ref(null);
 let typingTimeout = null;
+
+// Track the nickname used to join (for auto-rejoin)
+let joinedNickname = '';
 
 const needsNicknamePrompt = ref(false);
 const promptNickname = ref('');
@@ -259,6 +263,9 @@ const destructionMessage = ref('');
 
 const messagesContainer = ref(null);
 
+// Track if listeners have been set up to prevent duplicates
+let listenersSetUp = false;
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -268,13 +275,35 @@ const scrollToBottom = () => {
 };
 
 const setupSocketListeners = (socket) => {
-  currentSocketId.value = socket.id;
-  console.log('[ChatRoom] Current socket ID:', socket.id);
+  // Prevent duplicate listener registration
+  if (listenersSetUp) return;
+  listenersSetUp = true;
+
+  // Remove any existing room-specific listeners first
+  wsService.removeRoomListeners();
+
+  // Update socket ID
+  if (socket.id) {
+    currentSocketId.value = socket.id;
+    isConnected.value = socket.connected;
+  }
+
+  // Track connection state
+  socket.on('connect', () => {
+    currentSocketId.value = socket.id;
+    isConnected.value = true;
+    console.log('[ChatRoom] Socket connected, ID:', socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    isConnected.value = false;
+    console.log('[ChatRoom] Socket disconnected');
+  });
 
   // New incoming message
   socket.on('new_message', (msg) => {
-    console.log('[ChatRoom] New message:', msg);
-    console.log('[ChatRoom] Is my message?', msg.senderId === currentSocketId.value);
+    // Prevent duplicate messages
+    if (messages.value.some(m => m.id === msg.id)) return;
     messages.value.push(msg);
     scrollToBottom();
   });
@@ -283,7 +312,7 @@ const setupSocketListeners = (socket) => {
   socket.on('user_joined', (data) => {
     userList.value = data.users || [];
     messages.value.push({
-      id: 'sys_' + Date.now(),
+      id: 'sys_' + Date.now() + '_join',
       isSystem: true,
       text: `${data.user.nickname} เข้าร่วมห้องแล้ว`
     });
@@ -295,7 +324,7 @@ const setupSocketListeners = (socket) => {
     userList.value = data.users || [];
     if (data.user) {
       messages.value.push({
-        id: 'sys_' + Date.now(),
+        id: 'sys_' + Date.now() + '_left',
         isSystem: true,
         text: `${data.user.nickname} ออกจากห้องแล้ว`
       });
@@ -324,7 +353,6 @@ const setupSocketListeners = (socket) => {
     // Wipe local memory messages immediately
     messages.value = [];
     userList.value = [];
-    wsService.disconnect();
   });
 
   // Image viewed event
@@ -340,54 +368,141 @@ const setupSocketListeners = (socket) => {
   });
 };
 
-const joinCurrentRoom = async (nicknameToUse, retryCount = 0) => {
-  const socket = wsService.connect();
-  setupSocketListeners(socket);
-
-  // Wait for socket to connect
-  if (!socket.connected) {
-    console.log('[ChatRoom] Waiting for socket connection...');
-    await new Promise((resolve) => {
-      if (socket.connected) {
-        resolve();
-      } else {
-        socket.once('connect', resolve);
-        setTimeout(resolve, 5000); // Timeout after 5s
-      }
-    });
-  }
-
+/**
+ * Auto-rejoin when socket reconnects (socket ID changes, server needs re-registration)
+ */
+const handleReconnect = async (socket) => {
+  if (isRoomDestroyed.value) return;
+  
+  console.log('[ChatRoom] Auto-rejoining room after reconnect...');
+  currentSocketId.value = socket.id;
+  isConnected.value = true;
+  
   const ownerToken = sessionStorage.getItem(`ownerToken_${roomId.value}`);
+  const nickname = joinedNickname || sessionStorage.getItem('preferred_nickname') || generateRandomNickname();
 
-  console.log('[ChatRoom] Joining room:', roomId.value);
   const res = await wsService.joinRoom({
     roomId: roomId.value,
-    nickname: nicknameToUse,
+    nickname,
     ownerToken
   });
 
   if (res && res.success) {
-    console.log('[ChatRoom] Joined successfully');
+    console.log('[ChatRoom] Auto-rejoin successful');
     roomInfo.value = res;
     userList.value = res.users || [];
+    // Don't replace messages — keep existing local messages + merge server's recent
     if (res.recentMessages && res.recentMessages.length > 0) {
-      messages.value = [...res.recentMessages];
+      const existingIds = new Set(messages.value.map(m => m.id));
+      const newMsgs = res.recentMessages.filter(m => !existingIds.has(m.id));
+      if (newMsgs.length > 0) {
+        messages.value.push(...newMsgs);
+        scrollToBottom();
+      }
     }
-    scrollToBottom();
   } else {
-    console.error('[ChatRoom] Join failed:', res?.error);
+    console.error('[ChatRoom] Auto-rejoin failed:', res?.error);
+    // Room may have been destroyed while disconnected
+    if (res?.error?.includes('expired') || res?.error?.includes('does not exist')) {
+      isRoomDestroyed.value = true;
+      destructionReason.value = 'ttl_expired';
+      destructionMessage.value = 'ห้องนี้หมดอายุหรือถูกทำลายระหว่างที่คุณ offline';
+    }
+  }
+};
+
+const joinCurrentRoom = async (nicknameToUse, retryCount = 0) => {
+  try {
+    const socket = wsService.connect();
+    setupSocketListeners(socket);
+
+    // Register reconnect handler for auto-rejoin
+    wsService.onReconnect(handleReconnect);
+
+    // Wait for socket to connect with longer timeout
+    if (!socket.connected) {
+      console.log('[ChatRoom] Waiting for socket connection...');
+      await new Promise((resolve, reject) => {
+        if (socket.connected) {
+          resolve();
+        } else {
+          const timeout = setTimeout(() => {
+            reject(new Error('Connection timeout'));
+          }, 10000); // 10 second timeout
+          
+          socket.once('connect', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+          
+          socket.once('connect_error', (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+        }
+      }).catch(err => {
+        console.error('[ChatRoom] Connection failed:', err);
+        throw err;
+      });
+    }
+
+    // Ensure socket ID is set
+    if (socket.id) {
+      currentSocketId.value = socket.id;
+      isConnected.value = true;
+    }
+
+    console.log('[ChatRoom] Socket ready, ID:', socket.id);
+
+    const ownerToken = sessionStorage.getItem(`ownerToken_${roomId.value}`);
+
+    console.log('[ChatRoom] Joining room:', roomId.value);
+    const res = await wsService.joinRoom({
+      roomId: roomId.value,
+      nickname: nicknameToUse,
+      ownerToken
+    });
+
+    if (res && res.success) {
+      console.log('[ChatRoom] Joined successfully');
+      joinedNickname = nicknameToUse; // Store for auto-rejoin
+      roomInfo.value = res;
+      userList.value = res.users || [];
+      if (res.recentMessages && res.recentMessages.length > 0) {
+        messages.value = [...res.recentMessages];
+      }
+      scrollToBottom();
+    } else {
+      console.error('[ChatRoom] Join failed:', res?.error);
+      
+      // Retry logic with exponential backoff
+      if (retryCount < 2) {
+        const delay = (retryCount + 1) * 1000; // 1s, 2s
+        console.log(`[ChatRoom] Retrying join in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return joinCurrentRoom(nicknameToUse, retryCount + 1);
+      }
+      
+      joinError.value = res?.error || 'เกิดข้อผิดพลาดในการเข้าร่วมห้อง';
+      isRoomDestroyed.value = true;
+      destructionReason.value = 'error';
+      destructionMessage.value = res?.error || 'ไม่พบห้องนี้ หรือห้องอาจหมดอายุ/ถูกทำลายไปแล้ว';
+    }
+  } catch (err) {
+    console.error('[ChatRoom] Exception during join:', err);
     
-    // Retry once if failed
-    if (retryCount < 1) {
-      console.log('[ChatRoom] Retrying join...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // Retry on exception
+    if (retryCount < 2) {
+      const delay = (retryCount + 1) * 1000;
+      console.log(`[ChatRoom] Retrying after exception in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
       return joinCurrentRoom(nicknameToUse, retryCount + 1);
     }
     
-    joinError.value = res?.error || 'เกิดข้อผิดพลาดในการเข้าร่วมห้อง';
+    joinError.value = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
     isRoomDestroyed.value = true;
     destructionReason.value = 'error';
-    destructionMessage.value = res?.error || 'ไม่พบห้องนี้ หรือห้องอาจหมดอายุ/ถูกทำลายไปแล้ว';
+    destructionMessage.value = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
   }
 };
 
@@ -409,8 +524,19 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  // Cleanup: remove room-specific listeners and reconnect callback
+  wsService.removeRoomListeners();
+  wsService.offReconnect();
+  listenersSetUp = false;
+
+  // Leave the room but keep socket alive for potential re-entry
   wsService.leaveRoom();
   messages.value = [];
+
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+  }
 });
 
 const handleSendMessage = async (data) => {
@@ -472,8 +598,12 @@ const handleRoomExpired = () => {
 };
 
 const handleExit = async () => {
+  // Leave the room but DON'T disconnect the socket entirely
+  // This allows the user to re-enter the same or another room
   await wsService.leaveRoom();
-  wsService.disconnect();
+  wsService.removeRoomListeners();
+  wsService.offReconnect();
+  listenersSetUp = false;
   messages.value = [];
   router.push('/');
 };

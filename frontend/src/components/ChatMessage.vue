@@ -7,7 +7,7 @@
   </div>
 
   <!-- Outgoing Message (Me) -->
-  <div v-else-if="isMe.value" class="flex flex-col items-end mb-2 px-2 select-text w-full">
+  <div v-else-if="isMe" class="flex flex-col items-end mb-2 px-2 select-text w-full">
     <div class="flex items-center gap-1.5 mb-1">
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
       <span class="text-[11px] font-semibold text-rose-400">คุณ</span>
@@ -80,13 +80,7 @@ const emit = defineEmits(['viewImage']);
 
 // Use computed to make isMe reactive
 const isMe = computed(() => {
-  const match = props.message.senderId === props.currentSocketId;
-  console.log('[ChatMessage] isMe check:', {
-    senderId: props.message.senderId,
-    currentSocketId: props.currentSocketId,
-    isMe: match
-  });
-  return match;
+  return props.message.senderId === props.currentSocketId;
 });
 
 const imageShown = ref(false);

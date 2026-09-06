@@ -12,7 +12,7 @@ export const config = {
     { label: '6 hours', value: 21600 },
     { label: '24 hours', value: 86400 }
   ],
-  maxParticipants: 50,
+  maxParticipants: 2,
   maxMessageLength: 2000,
   maxNicknameLength: 30,
   rateLimit: {

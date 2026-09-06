@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 class WebSocketService {
   constructor() {
     this.socket = null;
+    this._reconnectCallback = null;
   }
 
   getBackendUrl() {
@@ -46,6 +47,10 @@ class WebSocketService {
 
       this.socket.on('reconnect', (attemptNumber) => {
         console.log('[WebSocket] Reconnected after', attemptNumber, 'attempts');
+        // Trigger reconnect callback so ChatRoom can rejoin
+        if (this._reconnectCallback) {
+          this._reconnectCallback(this.socket);
+        }
       });
 
       this.socket.on('reconnect_attempt', (attemptNumber) => {
@@ -76,6 +81,40 @@ class WebSocketService {
       return this.connect();
     }
     return this.socket;
+  }
+
+  /**
+   * Register a callback to be called when socket reconnects.
+   * Used by ChatRoom to auto-rejoin the room after reconnection.
+   */
+  onReconnect(callback) {
+    this._reconnectCallback = callback;
+  }
+
+  /**
+   * Remove the reconnect callback (cleanup)
+   */
+  offReconnect() {
+    this._reconnectCallback = null;
+  }
+
+  /**
+   * Remove specific room event listeners from the socket.
+   * Call this before setting up new listeners to prevent duplicates.
+   */
+  removeRoomListeners() {
+    if (!this.socket) return;
+    const events = [
+      'new_message',
+      'user_joined',
+      'user_left',
+      'user_typing',
+      'room_destroyed',
+      'image_viewed'
+    ];
+    events.forEach(event => {
+      this.socket.removeAllListeners(event);
+    });
   }
 
   emitWithTimeout(event, data, timeoutMs = 8000) {
@@ -172,7 +211,6 @@ class WebSocketService {
 
   sendTyping({ roomId, isTyping }) {
     const socket = this.getSocket();
-    console.log('[WebSocket] Sending typing:', { roomId, isTyping });
     socket.emit('typing', { roomId, isTyping });
   }
 
@@ -188,6 +226,7 @@ class WebSocketService {
   }
 
   disconnect() {
+    this.offReconnect();
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;

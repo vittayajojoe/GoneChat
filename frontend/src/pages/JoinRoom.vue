@@ -137,6 +137,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ArrowLeft, Dices, LogIn, AlertCircle, Camera, Upload, X, CheckCircle } from 'lucide-vue-next';
 import { generateRandomNickname } from '../services/nickname.js';
+import { wsService } from '../services/websocket.js';
 import { BrowserQRCodeReader } from '@zxing/library';
 
 const router = useRouter();
@@ -286,7 +287,7 @@ const handleJoin = async () => {
   successMessage.value = '';
 
   try {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+    const backendUrl = wsService.getBackendUrl();
     const res = await fetch(`${backendUrl}/api/room/${cleanRoomId}`);
     if (!res.ok) {
       errorMessage.value = 'ไม่พบห้องนี้ หรือห้องอาจหมดเวลา/ถูกทำลายไปแล้ว';
