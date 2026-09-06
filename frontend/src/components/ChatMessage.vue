@@ -7,46 +7,46 @@
   </div>
 
   <!-- Outgoing Message (Me) -->
-  <div v-else-if="isMe" class="flex flex-col items-end mb-2 px-2 select-text">
+  <div v-else-if="isMe" class="flex flex-col items-end mb-2 px-2 select-text w-full">
     <div class="flex items-center gap-1.5 mb-1">
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
       <span class="text-[11px] font-semibold text-rose-400">คุณ</span>
     </div>
-    <div class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-4 py-2.5 max-w-[80%] break-words shadow-lg">
+    <div class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-3 py-2 max-w-[85%] break-words shadow-lg">
       <!-- Image (if present) -->
       <div v-if="message.image" class="mb-2">
         <div v-if="message.image.data" class="relative">
-          <img v-if="imageShown" :src="message.image.data" class="max-w-full h-auto rounded-lg" />
-          <button v-else @click="showImage" class="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+          <img v-if="imageShown" :src="message.image.data" class="max-w-full max-h-64 h-auto rounded-lg object-contain" />
+          <button v-else @click="showImage" class="flex items-center gap-2 px-2.5 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm">
             <Eye class="w-4 h-4" />
-            <span class="text-sm">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
+            <span class="text-xs">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
           </button>
         </div>
-        <div v-else class="text-sm text-white/60 italic">รูปภาพหายไปแล้ว (ถูกดู {{ message.image.maxViews }} ครั้ง)</div>
+        <div v-else class="text-xs text-white/60 italic">รูปภาพหายไปแล้ว</div>
       </div>
-      <p v-if="message.text" class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
+      <p v-if="message.text" class="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{{ message.text }}</p>
     </div>
   </div>
 
   <!-- Incoming Message (Others) -->
-  <div v-else class="flex flex-col items-start mb-2 px-2 select-text">
+  <div v-else class="flex flex-col items-start mb-2 px-2 select-text w-full">
     <div class="flex items-center gap-1.5 mb-1">
-      <span class="text-[11px] font-semibold text-emerald-400">{{ message.senderName || message.nickname || 'Unknown' }}</span>
+      <span class="text-[11px] font-semibold text-emerald-400 truncate max-w-[150px]">{{ message.senderName || message.nickname || 'Unknown' }}</span>
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
     </div>
-    <div class="bg-slate-800 border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[80%] break-words shadow-md">
+    <div class="bg-slate-800 border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-md px-3 py-2 max-w-[85%] break-words shadow-md">
       <!-- Image (if present) -->
       <div v-if="message.image" class="mb-2">
         <div v-if="message.image.data" class="relative">
-          <img v-if="imageShown" :src="message.image.data" class="max-w-full h-auto rounded-lg" />
-          <button v-else @click="showImage" class="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+          <img v-if="imageShown" :src="message.image.data" class="max-w-full max-h-64 h-auto rounded-lg object-contain" />
+          <button v-else @click="showImage" class="flex items-center gap-2 px-2.5 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm">
             <Eye class="w-4 h-4" />
-            <span class="text-sm">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
+            <span class="text-xs">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
           </button>
         </div>
-        <div v-else class="text-sm text-slate-400 italic">รูปภาพหายไปแล้ว (ถูกดู {{ message.image.maxViews }} ครั้ง)</div>
+        <div v-else class="text-xs text-slate-400 italic">รูปภาพหายไปแล้ว</div>
       </div>
-      <p v-if="message.text && message.text !== '📷 รูปภาพ'" class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
+      <p v-if="message.text && message.text !== '📷 รูปภาพ'" class="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{{ message.text }}</p>
     </div>
   </div>
 </template>

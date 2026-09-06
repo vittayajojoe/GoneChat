@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
+  <div class="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden fixed inset-0">
     <!-- Inline Nickname Prompt Modal if opened via direct link without nickname -->
     <div
       v-if="needsNicknamePrompt"
@@ -45,14 +45,14 @@
     </div>
 
     <!-- Top Navigation Bar -->
-    <header class="h-16 shrink-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 flex items-center justify-between z-10">
+    <header class="h-14 shrink-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-3 flex items-center justify-between z-10">
       <!-- Left: Brand & Status -->
-      <div class="flex items-center gap-2.5">
-        <router-link to="/" class="flex items-center gap-1.5 group" title="GoneChat หน้าแรก">
+      <div class="flex items-center gap-2 min-w-0">
+        <router-link to="/" class="flex items-center gap-1.5 group shrink-0" title="GoneChat หน้าแรก">
           <div class="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-rose-500 group-hover:scale-105 transition-transform">
             <Flame class="w-4 h-4" />
           </div>
-          <span class="font-bold text-sm tracking-tight text-slate-100 hidden sm:inline">GoneChat</span>
+          <span class="font-bold text-sm tracking-tight text-slate-100 hidden sm:inline truncate">GoneChat</span>
         </router-link>
 
         <div class="h-4 w-[1px] bg-slate-800 hidden sm:block"></div>
@@ -64,22 +64,22 @@
       </div>
 
       <!-- Center: Live Room Timer -->
-      <div v-if="roomInfo && roomInfo.expiresAt">
+      <div v-if="roomInfo && roomInfo.expiresAt" class="absolute left-1/2 transform -translate-x-1/2">
         <RoomTimer :expiresAt="roomInfo.expiresAt" @expired="handleRoomExpired" />
       </div>
 
       <!-- Right: Action Buttons -->
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-1 shrink-0">
         <!-- Participants Button -->
         <button
           @click="showUserList = true"
-          class="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors relative"
+          class="p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors relative"
           title="ผู้เข้าร่วมในห้อง"
         >
           <Users class="w-4 h-4" />
           <span
             v-if="userList.length > 0"
-            class="absolute -top-0.5 -right-0.5 px-1.5 py-0.2 bg-slate-800 text-[10px] font-bold rounded-full text-slate-300 border border-slate-700"
+            class="absolute -top-0.5 -right-0.5 px-1 py-0.2 bg-slate-800 text-[9px] font-bold rounded-full text-slate-300 border border-slate-700 min-w-[16px] text-center"
           >
             {{ userList.length }}
           </span>
@@ -88,7 +88,7 @@
         <!-- Share QR Button -->
         <button
           @click="showQRModal = true"
-          class="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+          class="p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
           title="แชร์ QR Code / ลิงก์ห้อง"
         >
           <QrCode class="w-4 h-4" />
@@ -97,17 +97,17 @@
         <!-- Burn Room Button -->
         <button
           @click="showBurnModal = true"
-          class="px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1 transition-all"
+          class="px-2 py-1 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1 transition-all"
           title="ทำลายห้องทันที"
         >
-          <Flame class="w-3.5 h-3.5" />
-          <span class="hidden md:inline">ทำลายห้อง</span>
+          <Flame class="w-3 h-3" />
+          <span class="hidden md:inline">ทำลาย</span>
         </button>
 
         <!-- Exit Button -->
         <button
           @click="handleExit"
-          class="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+          class="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
           title="ออกจากห้อง"
         >
           <LogOut class="w-4 h-4" />
@@ -118,16 +118,16 @@
     <!-- Chat Messages Scroll Area -->
     <main
       ref="messagesContainer"
-      class="flex-1 overflow-y-auto overflow-x-hidden py-3"
-      style="overscroll-behavior: contain;"
+      class="flex-1 overflow-y-auto overflow-x-hidden py-2 w-full"
+      style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;"
     >
       <!-- Privacy Reminder Banner in Room -->
-      <div class="mx-3 my-4 p-3 rounded-2xl bg-slate-900/50 border border-slate-800/60 text-center">
+      <div class="mx-2 my-3 p-2.5 rounded-2xl bg-slate-900/50 border border-slate-800/60 text-center">
         <p class="text-xs font-semibold text-rose-400 flex items-center justify-center gap-1.5">
           <ShieldAlert class="w-3.5 h-3.5" />
           การสนทนาชั่วคราว
         </p>
-        <p class="text-[11px] text-slate-400 leading-snug mt-1">
+        <p class="text-[10px] text-slate-400 leading-snug mt-0.5">
           ไม่มีการบันทึกประวัติ ข้อความอยู่ใน RAM เท่านั้น
         </p>
       </div>
@@ -142,19 +142,19 @@
       />
 
       <!-- Typing Indicator -->
-      <div v-if="typingUser" class="flex items-center gap-2 py-2 px-4 text-xs text-slate-400 italic">
+      <div v-if="typingUser" class="flex items-center gap-2 py-2 px-3 text-xs text-slate-400 italic">
         <div class="flex gap-1">
           <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce"></span>
           <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
           <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
         </div>
-        <span>{{ typingUser }} กำลังพิมพ์...</span>
+        <span class="truncate">{{ typingUser }} กำลังพิมพ์...</span>
       </div>
     </main>
 
     <!-- Bottom Chat Input Bar -->
-    <footer class="shrink-0 p-3 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 safe-area-inset-bottom">
-      <div class="w-full max-w-4xl mx-auto">
+    <footer class="shrink-0 p-2 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 w-full safe-area-inset-bottom">
+      <div class="w-full max-w-4xl mx-auto px-1">
         <ChatInput
           :disabled="isRoomDestroyed"
           @send="handleSendMessage"
