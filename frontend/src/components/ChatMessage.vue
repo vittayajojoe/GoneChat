@@ -9,7 +9,7 @@
   <!-- Outgoing Message (Me) -->
   <div v-else-if="isMe" class="flex flex-col items-end mb-3 select-text">
     <div class="flex items-center gap-1.5 mb-1 px-1">
-      <span class="text-[11px] text-slate-400">You</span>
+      <span class="text-[11px] font-medium text-rose-300">คุณ</span>
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
     </div>
     <div class="bg-rose-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%] md:max-w-md break-words shadow-sm">

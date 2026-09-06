@@ -6,11 +6,11 @@
       </div>
 
       <div class="space-y-2">
-        <h3 class="text-lg font-bold text-rose-100">Burn Room?</h3>
+        <h3 class="text-lg font-bold text-rose-100">ทำลายห้องทันที?</h3>
         <p class="text-sm text-slate-300 leading-relaxed">
-          Are you sure? All participants will be disconnected and all messages in RAM will be destroyed immediately.
+          คุณแน่ใจหรือไม่? ผู้เข้าร่วมทุกคนจะถูกตัดการเชื่อมต่อ และข้อความทั้งหมดใน RAM จะถูกลบถาวรทันที
         </p>
-        <p class="text-xs text-rose-400 font-medium">This action cannot be undone.</p>
+        <p class="text-xs text-rose-400 font-medium">การกระทำนี้ไม่สามารถย้อนกลับได้</p>
       </div>
 
       <div class="flex items-center gap-3 pt-2">
@@ -19,7 +19,7 @@
           :disabled="isBurning"
           class="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-750 text-slate-300 text-sm font-medium rounded-xl transition-colors"
         >
-          Cancel
+          ยกเลิก
         </button>
 
         <button
@@ -28,7 +28,7 @@
           class="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-rose-950 flex items-center justify-center gap-2"
         >
           <Flame class="w-4 h-4" />
-          <span>{{ isBurning ? 'Burning...' : 'Burn Room' }}</span>
+          <span>{{ isBurning ? 'กำลังทำลาย...' : 'ทำลายห้อง' }}</span>
         </button>
       </div>
     </div>

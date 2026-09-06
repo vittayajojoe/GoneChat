@@ -10,8 +10,8 @@
           <Flame class="w-6 h-6" />
         </div>
         <div class="space-y-1">
-          <h3 class="text-lg font-bold text-slate-100">Join Conversation</h3>
-          <p class="text-xs text-slate-400">Choose a temporary nickname to enter</p>
+          <h3 class="text-lg font-bold text-slate-100">เข้าร่วมการสนทนา</h3>
+          <p class="text-xs text-slate-400">เลือกชื่อเล่นชั่วคราวเพื่อเข้าสู่ห้องแชท</p>
         </div>
 
         <div class="relative flex items-center">
@@ -19,7 +19,7 @@
             v-model="promptNickname"
             type="text"
             maxlength="30"
-            placeholder="Enter nickname"
+            placeholder="กรอกชื่อเล่น หรือกดสุ่ม"
             class="w-full bg-slate-800 border border-slate-700 focus:border-rose-500 rounded-2xl py-3 px-4 pr-11 text-sm text-slate-100 outline-none"
             @keydown.enter="submitPromptNickname"
           />
@@ -27,7 +27,7 @@
             type="button"
             @click="promptNickname = generateRandomNickname()"
             class="absolute right-2 p-1.5 text-slate-400 hover:text-rose-400 rounded-xl"
-            title="Random Nickname"
+            title="สุ่มชื่อเล่นใหม่"
           >
             <Dices class="w-4 h-4" />
           </button>
@@ -39,7 +39,7 @@
           @click="submitPromptNickname"
           class="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold rounded-xl shadow-lg transition-all"
         >
-          Join Room
+          เข้าสู่ห้องแชท
         </button>
       </div>
     </div>
@@ -48,7 +48,7 @@
     <header class="h-16 shrink-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 flex items-center justify-between z-10">
       <!-- Left: Brand & Status -->
       <div class="flex items-center gap-2.5">
-        <router-link to="/" class="flex items-center gap-1.5 group" title="GoneChat Home">
+        <router-link to="/" class="flex items-center gap-1.5 group" title="GoneChat หน้าแรก">
           <div class="w-7 h-7 bg-slate-800 rounded-lg flex items-center justify-center text-rose-500 group-hover:scale-105 transition-transform">
             <Flame class="w-4 h-4" />
           </div>
@@ -59,7 +59,7 @@
 
         <div class="flex items-center gap-1.5 text-xs text-emerald-400">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="font-medium hidden xs:inline">Active</span>
+          <span class="font-medium hidden xs:inline">ออนไลน์</span>
         </div>
       </div>
 
@@ -74,7 +74,7 @@
         <button
           @click="showUserList = true"
           class="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors relative"
-          title="Online Participants"
+          title="ผู้เข้าร่วมในห้อง"
         >
           <Users class="w-4 h-4" />
           <span
@@ -89,7 +89,7 @@
         <button
           @click="showQRModal = true"
           class="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-          title="Share Room / QR"
+          title="แชร์ QR Code / ลิงก์ห้อง"
         >
           <QrCode class="w-4 h-4" />
         </button>
@@ -98,17 +98,17 @@
         <button
           @click="showBurnModal = true"
           class="px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1 transition-all"
-          title="Burn Room"
+          title="ทำลายห้องทันที"
         >
           <Flame class="w-3.5 h-3.5" />
-          <span class="hidden md:inline">Burn</span>
+          <span class="hidden md:inline">ทำลายห้อง</span>
         </button>
 
         <!-- Exit Button -->
         <button
           @click="handleExit"
           class="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
-          title="Exit Room"
+          title="ออกจากห้อง"
         >
           <LogOut class="w-4 h-4" />
         </button>
@@ -124,10 +124,10 @@
       <div class="max-w-md mx-auto my-3 p-3 rounded-2xl bg-slate-900/50 border border-slate-800/60 text-center space-y-1">
         <p class="text-xs font-semibold text-rose-400 flex items-center justify-center gap-1.5">
           <ShieldAlert class="w-3.5 h-3.5" />
-          Temporary Conversation
+          การสนทนาชั่วคราว
         </p>
         <p class="text-[11px] text-slate-400 leading-snug">
-          Zero database persistence. All messages live in server RAM and will vanish permanently when closed, burned, or expired.
+          ไม่มีการบันทึกประวัติ ข้อความอยู่ในหน่วยความจำ RAM เท่านั้น และจะหายไปทันทีเมื่อกดออกจากห้อง หมดเวลา หรือกดทำลายห้อง
         </p>
       </div>
 
@@ -146,7 +146,7 @@
           <span class="w-1.5 h-1.5 bg-rose-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
           <span class="w-1.5 h-1.5 bg-rose-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
         </div>
-        <span>{{ typingUser }} is typing...</span>
+        <span>{{ typingUser }} กำลังพิมพ์...</span>
       </div>
     </main>
 
@@ -194,20 +194,20 @@
 
         <div class="space-y-2">
           <h2 class="text-2xl font-black text-slate-100">
-            {{ destructionReason === 'room_burned' ? 'Room Burned' : 'Room Disappeared' }}
+            {{ destructionReason === 'room_burned' ? 'ห้องถูกทำลายแล้ว' : 'ห้องสลายตัวแล้ว' }}
           </h2>
-          <p class="text-sm text-slate-400 leading-relaxed max-w-xs mx-auto">
-            {{ destructionMessage || 'This room and its entire memory buffer have vanished. There is no conversation history.' }}
+          <p class="text-sm text-slate-300 leading-relaxed max-w-xs mx-auto">
+            {{ destructionMessage || 'ห้องนี้และข้อความทั้งหมดใน RAM ถูกลบอย่างสมบูรณ์ ไม่มีประวัติการสนทนาหลงเหลือ' }}
           </p>
         </div>
 
         <div class="pt-4">
           <router-link
             to="/"
-            class="inline-flex items-center gap-2 px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-semibold rounded-2xl shadow-xl transition-all"
+            class="inline-flex items-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold rounded-2xl shadow-xl transition-all"
           >
             <ArrowLeft class="w-4 h-4" />
-            <span>Return to Home</span>
+            <span>กลับสู่หน้าหลัก</span>
           </router-link>
         </div>
       </div>
@@ -280,7 +280,7 @@ const setupSocketListeners = (socket) => {
     messages.value.push({
       id: 'sys_' + Date.now(),
       isSystem: true,
-      text: `${data.user.nickname} joined the room`
+      text: `${data.user.nickname} เข้าร่วมห้องแล้ว`
     });
     scrollToBottom();
   });
@@ -292,7 +292,7 @@ const setupSocketListeners = (socket) => {
       messages.value.push({
         id: 'sys_' + Date.now(),
         isSystem: true,
-        text: `${data.user.nickname} left the room`
+        text: `${data.user.nickname} ออกจากห้องแล้ว`
       });
       scrollToBottom();
     }
@@ -343,10 +343,10 @@ const joinCurrentRoom = async (nicknameToUse) => {
     }
     scrollToBottom();
   } else {
-    joinError.value = res?.error || 'Failed to join room';
+    joinError.value = res?.error || 'เกิดข้อผิดพลาดในการเข้าร่วมห้อง';
     isRoomDestroyed.value = true;
     destructionReason.value = 'error';
-    destructionMessage.value = res?.error || 'Room does not exist or has expired';
+    destructionMessage.value = res?.error || 'ไม่พบห้องนี้ หรือห้องอาจหมดอายุ/ถูกทำลายไปแล้ว';
   }
 };
 
@@ -369,16 +369,18 @@ onMounted(() => {
 
 onUnmounted(() => {
   wsService.leaveRoom();
-  // Ensure local message state is discarded upon leaving
   messages.value = [];
 });
 
 const handleSendMessage = async (text) => {
   if (isRoomDestroyed.value) return;
-  await wsService.sendMessage({
+  const res = await wsService.sendMessage({
     roomId: roomId.value,
     text
   });
+  if (res && !res.success) {
+    alert(res.error || 'ส่งข้อความไม่สำเร็จ');
+  }
 };
 
 const handleSendTyping = (isTyping) => {
@@ -401,14 +403,14 @@ const handleConfirmBurn = async () => {
   showBurnModal.value = false;
 
   if (!res?.success) {
-    alert(res?.error || 'Only the room host can burn this room.');
+    alert(res?.error || 'เฉพาะผู้สร้างห้องเท่านั้นที่สามารถทำลายห้องได้');
   }
 };
 
 const handleRoomExpired = () => {
   isRoomDestroyed.value = true;
   destructionReason.value = 'ttl_expired';
-  destructionMessage.value = '💨 This room has reached its lifetime and disappeared forever.';
+  destructionMessage.value = '💨 ห้องนี้หมดอายุตามเวลาที่กำหนดและสลายตัวไปแล้ว';
   messages.value = [];
   userList.value = [];
 };

@@ -7,6 +7,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Google Sans Text"', '"Noto Sans Thai"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
         dark: {
           900: '#0b0f19',

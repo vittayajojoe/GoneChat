@@ -4,7 +4,7 @@
       <router-link to="/" class="p-2 -ml-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
         <ArrowLeft class="w-5 h-5" />
       </router-link>
-      <h2 class="text-lg font-bold text-slate-100">Create Ephemeral Room</h2>
+      <h2 class="text-lg font-bold text-slate-100">สร้างห้องแชทชั่วคราว</h2>
       <div class="w-9"></div>
     </header>
 
@@ -12,20 +12,20 @@
       <!-- Nickname Section -->
       <div class="space-y-2">
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">
-          Your Nickname
+          ชื่อเล่นของคุณ
         </label>
         <div class="relative flex items-center">
           <input
             v-model="nickname"
             type="text"
             maxlength="30"
-            placeholder="Enter nickname"
+            placeholder="กรอกชื่อเล่น หรือกดสุ่มชื่อ"
             class="w-full bg-slate-900 border border-slate-800 focus:border-rose-500 rounded-2xl py-3.5 px-4 pr-12 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
           />
           <button
             type="button"
             @click="randomizeNickname"
-            title="Generate Random Nickname"
+            title="สุ่มชื่อเล่นใหม่"
             class="absolute right-2.5 p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-colors"
           >
             <Dices class="w-4 h-4" />
@@ -37,9 +37,9 @@
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">
-            Room Lifetime (TTL)
+            อายุของห้อง (TTL)
           </label>
-          <span class="text-xs text-rose-400 font-medium">Room auto-burns after TTL</span>
+          <span class="text-xs text-rose-400 font-medium">ห้องจะสลายตัวอัตโนมัติ</span>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
@@ -65,8 +65,9 @@
       </div>
 
       <!-- Error banner -->
-      <div v-if="errorMessage" class="p-3 bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs rounded-xl">
-        {{ errorMessage }}
+      <div v-if="errorMessage" class="p-3.5 bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs rounded-2xl leading-relaxed flex items-center gap-2">
+        <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
+        <span>{{ errorMessage }}</span>
       </div>
     </main>
 
@@ -78,7 +79,7 @@
         class="w-full py-4 bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white font-bold text-base rounded-2xl shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
       >
         <Flame class="w-5 h-5" />
-        <span>{{ isSubmitting ? 'Creating Room...' : 'Launch Room' }}</span>
+        <span>{{ isSubmitting ? 'กำลังสร้างห้อง...' : 'เปิดห้องแชท' }}</span>
       </button>
     </footer>
   </div>
@@ -87,7 +88,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft, Dices, Flame } from 'lucide-vue-next';
+import { ArrowLeft, Dices, Flame, AlertCircle } from 'lucide-vue-next';
 import { generateRandomNickname } from '../services/nickname.js';
 import { wsService } from '../services/websocket.js';
 
@@ -99,12 +100,12 @@ const isSubmitting = ref(false);
 const errorMessage = ref('');
 
 const ttlOptions = [
-  { label: '5 minutes', value: 300 },
-  { label: '15 minutes', value: 900 },
-  { label: '30 minutes', value: 1800 },
-  { label: '1 hour', value: 3600 },
-  { label: '6 hours', value: 21600 },
-  { label: '24 hours', value: 86400 }
+  { label: '5 นาที', value: 300 },
+  { label: '15 นาที', value: 900 },
+  { label: '30 นาที', value: 1800 },
+  { label: '1 ชั่วโมง', value: 3600 },
+  { label: '6 ชั่วโมง', value: 21600 },
+  { label: '24 ชั่วโมง', value: 86400 }
 ];
 
 const randomizeNickname = () => {
@@ -117,7 +118,7 @@ onMounted(() => {
 
 const handleCreate = async () => {
   if (!nickname.value.trim()) {
-    errorMessage.value = 'Please enter or generate a nickname';
+    errorMessage.value = 'กรุณาระบุชื่อเล่นของคุณ หรือกดสุ่มชื่อ';
     return;
   }
 
@@ -125,22 +126,22 @@ const handleCreate = async () => {
   errorMessage.value = '';
 
   try {
-    const res = await wsService.createRoom({
+    // Try fast HTTP creation first with fallback to WebSocket
+    const res = await wsService.createRoomHttp({
       ttl: selectedTTL.value,
       nickname: nickname.value.trim()
     });
 
     if (res && res.success) {
-      // Temporarily store ownerToken and nickname in memory / sessionStorage for this session
       sessionStorage.setItem(`ownerToken_${res.roomId}`, res.ownerToken);
       sessionStorage.setItem('preferred_nickname', nickname.value.trim());
 
       router.push(`/r/${res.roomId}`);
     } else {
-      errorMessage.value = res?.error || 'Failed to create room. Please try again.';
+      errorMessage.value = res?.error || 'เกิดข้อผิดพลาดในการสร้างห้อง กรุณาลองใหม่อีกครั้ง';
     }
   } catch (err) {
-    errorMessage.value = 'Network or connection error. Please try again.';
+    errorMessage.value = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend ได้ กรุณาตรวจสอบว่าเซิร์ฟเวอร์ทำงานอยู่';
   } finally {
     isSubmitting.value = false;
   }

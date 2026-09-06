@@ -1,17 +1,17 @@
-const ADJECTIVES = [
-  'Silent', 'Quiet', 'Blue', 'Green', 'Golden', 'Silver', 'Shadow',
-  'Mystic', 'Swift', 'Calm', 'Brave', 'Hidden', 'Gentle', 'Cosmic',
-  'Amber', 'Crimson', 'Lunar', 'Solar', 'Velvet', 'Frost'
+const ANIMALS = [
+  'จิ้งจอก', 'นกฮูก', 'แมว', 'แพนด้า', 'เสือดาว', 'กระต่าย',
+  'หมาป่า', 'นากน้อย', 'หมีขาว', 'โลมา', 'สิงโต', 'เหยี่ยว',
+  'เพนกวิน', 'กระรอก', 'ทานุกิ', 'อินทรี', 'กวางป่า', 'ฉลามขาว'
 ];
 
-const ANIMALS = [
-  'Fox', 'Cat', 'Panda', 'Owl', 'Wolf', 'Falcon', 'Tiger',
-  'Rabbit', 'Otter', 'Eagle', 'Hawk', 'Dolphin', 'Koala', 'Lynx',
-  'Bear', 'Raven', 'Deer', 'Panther', 'Hedgehog', 'Seal'
+const ADJECTIVES = [
+  'เงียบสงบ', 'ขี้เซา', 'สีคราม', 'อารมณ์ดี', 'รัตติกาล', 'หิมะ',
+  'สายฟ้า', 'สุขุม', 'แสนรู้', 'ใจดี', 'พริ้วไหว', 'นักสำรวจ',
+  'ลึกลับ', 'สีทอง', 'ประกายแสง', 'สายลม', 'จอมเวท', 'ขี้อ้อน'
 ];
 
 export function generateRandomNickname() {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
   const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  return `${adj} ${animal}`;
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  return `${animal}${adj}`;
 }

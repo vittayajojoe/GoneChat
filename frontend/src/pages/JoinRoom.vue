@@ -4,7 +4,7 @@
       <router-link to="/" class="p-2 -ml-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
         <ArrowLeft class="w-5 h-5" />
       </router-link>
-      <h2 class="text-lg font-bold text-slate-100">Join Ephemeral Room</h2>
+      <h2 class="text-lg font-bold text-slate-100">เข้าร่วมห้องแชท</h2>
       <div class="w-9"></div>
     </header>
 
@@ -12,13 +12,13 @@
       <!-- Room ID / Link Input -->
       <div class="space-y-2">
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">
-          Room Code or Link
+          รหัสห้อง หรือ ลิงก์คำเชิญ
         </label>
         <div class="relative flex items-center">
           <input
             v-model="roomInput"
             type="text"
-            placeholder="e.g. a8F2kL9xPq7Z4mT6 or paste link"
+            placeholder="เช่น a8F2kL9xPq7Z4mT6 หรือ วางลิงก์"
             class="w-full bg-slate-900 border border-slate-800 focus:border-rose-500 rounded-2xl py-3.5 px-4 text-sm text-slate-100 font-mono placeholder-slate-500 outline-none transition-colors"
           />
         </div>
@@ -27,20 +27,20 @@
       <!-- Nickname Section -->
       <div class="space-y-2">
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">
-          Your Nickname
+          ชื่อเล่นของคุณ
         </label>
         <div class="relative flex items-center">
           <input
             v-model="nickname"
             type="text"
             maxlength="30"
-            placeholder="Enter nickname"
+            placeholder="กรอกชื่อเล่น หรือกดสุ่มชื่อ"
             class="w-full bg-slate-900 border border-slate-800 focus:border-rose-500 rounded-2xl py-3.5 px-4 pr-12 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
           />
           <button
             type="button"
             @click="randomizeNickname"
-            title="Generate Random Nickname"
+            title="สุ่มชื่อเล่นใหม่"
             class="absolute right-2.5 p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-colors"
           >
             <Dices class="w-4 h-4" />
@@ -49,8 +49,9 @@
       </div>
 
       <!-- Error message -->
-      <div v-if="errorMessage" class="p-3 bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs rounded-xl">
-        {{ errorMessage }}
+      <div v-if="errorMessage" class="p-3.5 bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs rounded-2xl leading-relaxed flex items-center gap-2">
+        <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
+        <span>{{ errorMessage }}</span>
       </div>
     </main>
 
@@ -62,7 +63,7 @@
         class="w-full py-4 bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white font-bold text-base rounded-2xl shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
       >
         <LogIn class="w-5 h-5" />
-        <span>{{ isSubmitting ? 'Checking Room...' : 'Enter Room' }}</span>
+        <span>{{ isSubmitting ? 'กำลังตรวจสอบห้อง...' : 'เข้าสู่ห้องแชท' }}</span>
       </button>
     </footer>
   </div>
@@ -71,7 +72,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft, Dices, LogIn } from 'lucide-vue-next';
+import { ArrowLeft, Dices, LogIn, AlertCircle } from 'lucide-vue-next';
 import { generateRandomNickname } from '../services/nickname.js';
 
 const router = useRouter();
@@ -106,12 +107,12 @@ const extractRoomId = (input) => {
 const handleJoin = async () => {
   const cleanRoomId = extractRoomId(roomInput.value);
   if (!cleanRoomId) {
-    errorMessage.value = 'Please enter a Room Code or Link';
+    errorMessage.value = 'กรุณาระบุรหัสห้อง หรือวางลิงก์คำเชิญ';
     return;
   }
 
   if (!nickname.value.trim()) {
-    errorMessage.value = 'Please enter a nickname';
+    errorMessage.value = 'กรุณากรอกชื่อเล่นของคุณ';
     return;
   }
 
@@ -119,11 +120,10 @@ const handleJoin = async () => {
   errorMessage.value = '';
 
   try {
-    // Verify room existence via HTTP pre-check
     const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
     const res = await fetch(`${backendUrl}/api/room/${cleanRoomId}`);
     if (!res.ok) {
-      errorMessage.value = 'Room does not exist or has expired';
+      errorMessage.value = 'ไม่พบห้องนี้ หรือห้องอาจหมดเวลา/ถูกทำลายไปแล้ว';
       isSubmitting.value = false;
       return;
     }

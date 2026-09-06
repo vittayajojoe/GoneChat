@@ -10,12 +10,12 @@
         <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
           GoneChat
         </h1>
-        <p class="text-rose-400 font-semibold text-base tracking-wide">Chat. Then Gone.</p>
-        <p class="text-xs text-slate-400 font-thai">คุยเสร็จ หายไป</p>
+        <p class="text-rose-400 font-semibold text-lg tracking-wide">คุยเสร็จ หายไป</p>
+        <p class="text-xs text-slate-500 font-medium">Chat. Then Gone.</p>
       </div>
 
-      <p class="text-sm text-slate-400 max-w-sm mx-auto leading-relaxed pt-2">
-        Temporary conversations. No permanent chat history. Messages live only in RAM, then vanish forever.
+      <p class="text-sm text-slate-300 max-w-sm mx-auto leading-relaxed pt-2">
+        แพลตฟอร์มแชทชั่วคราว ไม่เก็บประวัติถาวร ข้อความทั้งหมดอยู่ใน RAM ของเซิร์ฟเวอร์ และสลายไปตลอดกาล
       </p>
     </header>
 
@@ -30,8 +30,8 @@
             <PlusCircle class="w-5 h-5 text-white" />
           </div>
           <div class="text-left">
-            <div class="text-base font-bold">Create Room</div>
-            <div class="text-xs text-rose-200">Start an ephemeral room with TTL</div>
+            <div class="text-base font-bold">สร้างห้องใหม่</div>
+            <div class="text-xs text-rose-200">เริ่มห้องแชทชั่วคราวพร้อมตั้งเวลาทำลาย</div>
           </div>
         </div>
         <ArrowRight class="w-5 h-5 text-rose-200 group-hover:translate-x-1 transition-transform" />
@@ -46,8 +46,8 @@
             <LogIn class="w-5 h-5 text-slate-300" />
           </div>
           <div class="text-left">
-            <div class="text-base font-bold">Join Room</div>
-            <div class="text-xs text-slate-400">Enter a Room Code or Link</div>
+            <div class="text-base font-bold">เข้าร่วมห้อง</div>
+            <div class="text-xs text-slate-400">กรอกรหัสห้อง หรือวางลิงก์ที่ได้รับ</div>
           </div>
         </div>
         <ArrowRight class="w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
@@ -58,44 +58,44 @@
         <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
           <div class="flex items-center gap-2 text-rose-400">
             <Cpu class="w-4 h-4" />
-            <span class="text-xs font-bold uppercase tracking-wider">RAM Only</span>
+            <span class="text-xs font-bold uppercase tracking-wider">RAM ล้วนๆ</span>
           </div>
-          <p class="text-xs text-slate-400 leading-snug">No database. Zero persistent disk storage.</p>
+          <p class="text-xs text-slate-400 leading-snug">ไม่มี Database ไม่บันทึกประวัติลงฮาร์ดดิสก์</p>
         </div>
 
         <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
           <div class="flex items-center gap-2 text-amber-400">
             <Clock class="w-4 h-4" />
-            <span class="text-xs font-bold uppercase tracking-wider">Auto TTL</span>
+            <span class="text-xs font-bold uppercase tracking-wider">นับเวลาถอยหลัง</span>
           </div>
-          <p class="text-xs text-slate-400 leading-snug">Room disappears when timer expires.</p>
+          <p class="text-xs text-slate-400 leading-snug">ห้องสลายตัวทันทีเมื่อครบอายุที่กำหนด (TTL)</p>
         </div>
 
         <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
           <div class="flex items-center gap-2 text-emerald-400">
             <ShieldCheck class="w-4 h-4" />
-            <span class="text-xs font-bold uppercase tracking-wider">No Accounts</span>
+            <span class="text-xs font-bold uppercase tracking-wider">ไม่ต้องมีบัญชี</span>
           </div>
-          <p class="text-xs text-slate-400 leading-snug">No login, email, or passwords required.</p>
+          <p class="text-xs text-slate-400 leading-snug">ไม่ต้อง Login ไม่ต้องใช้อีเมลหรือเบอร์โทร</p>
         </div>
 
         <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
           <div class="flex items-center gap-2 text-rose-500">
             <Flame class="w-4 h-4" />
-            <span class="text-xs font-bold uppercase tracking-wider">Burn Room</span>
+            <span class="text-xs font-bold uppercase tracking-wider">ทำลายห้องทันที</span>
           </div>
-          <p class="text-xs text-slate-400 leading-snug">Instantly destroy room on demand.</p>
+          <p class="text-xs text-slate-400 leading-snug">กดปุ่ม Burn Room เพื่อล้างทุกอย่างทันใจ</p>
         </div>
       </div>
     </main>
 
     <!-- Footer Privacy Note -->
     <footer class="pt-6 pb-2 text-center text-xs text-slate-500 space-y-1">
-      <p class="text-[11px] text-slate-400">
+      <p class="text-[12px] text-slate-300">
         🛡️ GoneChat ไม่เก็บประวัติข้อความการสนทนาแบบถาวร
       </p>
       <p class="text-[10px] text-slate-600">
-        GoneChat MVP &bull; Chat. Then Gone.
+        GoneChat MVP &bull; คุยเสร็จ หายไป
       </p>
     </footer>
   </div>

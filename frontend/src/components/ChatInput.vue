@@ -7,7 +7,7 @@
       @input="handleInput"
       rows="1"
       maxlength="2000"
-      placeholder="Type a temporary message..."
+      placeholder="พิมพ์ข้อความชั่วคราว..."
       class="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none resize-none px-2 py-1 max-h-32 leading-relaxed"
     ></textarea>
 
@@ -21,7 +21,7 @@
         :disabled="!text.trim() || disabled"
         class="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
         :class="text.trim() && !disabled ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm' : 'bg-slate-800 text-slate-500 cursor-not-allowed'"
-        title="Send Message"
+        title="ส่งข้อความ"
       >
         <Send class="w-4 h-4" />
       </button>

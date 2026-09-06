@@ -43,6 +43,18 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Create room via HTTP endpoint
+app.post('/api/room/create', (req, res) => {
+  try {
+    const { ttl, nickname, maxParticipants } = req.body || {};
+    const result = roomManager.createRoom({ ttl, nickname, maxParticipants });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    safeLog.error('Error creating room via API', err);
+    res.status(500).json({ success: false, error: 'ไม่สามารถสร้างห้องได้ กรุณาลองใหม่อีกครั้ง' });
+  }
+});
+
 // Pre-check room existence
 app.get('/api/room/:roomId', (req, res) => {
   const { roomId } = req.params;

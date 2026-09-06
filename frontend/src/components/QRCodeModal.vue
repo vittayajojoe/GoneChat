@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between pb-1">
         <h3 class="text-base font-semibold text-slate-100 flex items-center gap-2">
           <QrCode class="w-5 h-5 text-rose-400" />
-          Share Room
+          แชร์ห้องแชท
         </h3>
         <button @click="emit('close')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
           <X class="w-4 h-4" />
@@ -16,7 +16,7 @@
       </div>
 
       <div class="space-y-1">
-        <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Room Code</p>
+        <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">รหัสห้อง (Room Code)</p>
         <p class="text-sm font-mono font-bold text-slate-200 select-all bg-slate-800/80 py-1.5 px-3 rounded-lg border border-slate-700/50 inline-block">
           {{ roomId }}
         </p>
@@ -29,7 +29,7 @@
         >
           <Check v-if="copied" class="w-4 h-4 text-white" />
           <Copy v-else class="w-4 h-4" />
-          <span>{{ copied ? 'Link Copied!' : 'Copy Invitation Link' }}</span>
+          <span>{{ copied ? 'คัดลอกลิงก์สำเร็จแล้ว!' : 'คัดลอกลิงก์เชิญเข้าห้อง' }}</span>
         </button>
 
         <button
@@ -38,7 +38,7 @@
           class="w-full py-2 px-4 bg-slate-800 hover:bg-slate-750 text-slate-300 text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors"
         >
           <Share2 class="w-4 h-4" />
-          <span>Share via...</span>
+          <span>แชร์ผ่านแอปอื่น...</span>
         </button>
       </div>
     </div>
@@ -111,8 +111,8 @@ const handleNativeShare = async () => {
   if (navigator.share) {
     try {
       await navigator.share({
-        title: 'GoneChat Invitation',
-        text: 'Join my temporary conversation on GoneChat. No history, RAM-only.',
+        title: 'คำเชิญเข้าร่วม GoneChat',
+        text: 'เข้าร่วมห้องแชทชั่วคราวกับฉันบน GoneChat (ไม่มีประวัติการสนทนา)',
         url: roomUrl.value
       });
     } catch (err) {
