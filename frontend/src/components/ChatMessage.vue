@@ -7,24 +7,24 @@
   </div>
 
   <!-- Outgoing Message (Me) -->
-  <div v-else-if="isMe" class="flex flex-col items-end mb-3 select-text">
-    <div class="flex items-center gap-1.5 mb-1 px-1">
-      <span class="text-[11px] font-medium text-rose-300">คุณ</span>
+  <div v-else-if="isMe" class="flex flex-col items-end mb-2 px-2 select-text">
+    <div class="flex items-center gap-1.5 mb-1">
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
+      <span class="text-[11px] font-semibold text-rose-400">คุณ</span>
     </div>
-    <div class="bg-rose-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%] md:max-w-md break-words shadow-sm">
-      <p class="text-sm leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
+    <div class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-4 py-2.5 max-w-[80%] break-words shadow-lg">
+      <p class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
     </div>
   </div>
 
   <!-- Incoming Message (Others) -->
-  <div v-else class="flex flex-col items-start mb-3 select-text">
-    <div class="flex items-center gap-1.5 mb-1 px-1">
-      <span class="text-[11px] font-medium text-emerald-400">{{ message.senderName }}</span>
+  <div v-else class="flex flex-col items-start mb-2 px-2 select-text">
+    <div class="flex items-center gap-1.5 mb-1">
+      <span class="text-[11px] font-semibold text-emerald-400">{{ message.nickname || 'Unknown' }}</span>
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
     </div>
-    <div class="bg-slate-800 border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%] md:max-w-md break-words shadow-sm">
-      <p class="text-sm leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
+    <div class="bg-slate-800 border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[80%] break-words shadow-md">
+      <p class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
     </div>
   </div>
 </template>
@@ -46,6 +46,6 @@ const isMe = props.message.senderId === props.currentSocketId;
 const formatTime = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 };
 </script>

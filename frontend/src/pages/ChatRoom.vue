@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
+  <div class="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
     <!-- Inline Nickname Prompt Modal if opened via direct link without nickname -->
     <div
       v-if="needsNicknamePrompt"
@@ -118,16 +118,17 @@
     <!-- Chat Messages Scroll Area -->
     <main
       ref="messagesContainer"
-      class="flex-1 overflow-y-auto px-4 py-4 space-y-1 scroll-smooth select-text"
+      class="flex-1 overflow-y-auto overflow-x-hidden py-3"
+      style="overscroll-behavior: contain;"
     >
       <!-- Privacy Reminder Banner in Room -->
-      <div class="max-w-md mx-auto my-3 p-3 rounded-2xl bg-slate-900/50 border border-slate-800/60 text-center space-y-1">
+      <div class="mx-3 my-4 p-3 rounded-2xl bg-slate-900/50 border border-slate-800/60 text-center">
         <p class="text-xs font-semibold text-rose-400 flex items-center justify-center gap-1.5">
           <ShieldAlert class="w-3.5 h-3.5" />
           การสนทนาชั่วคราว
         </p>
-        <p class="text-[11px] text-slate-400 leading-snug">
-          ไม่มีการบันทึกประวัติ ข้อความอยู่ในหน่วยความจำ RAM เท่านั้น และจะหายไปทันทีเมื่อกดออกจากห้อง หมดเวลา หรือกดทำลายห้อง
+        <p class="text-[11px] text-slate-400 leading-snug mt-1">
+          ไม่มีการบันทึกประวัติ ข้อความอยู่ใน RAM เท่านั้น
         </p>
       </div>
 
@@ -140,19 +141,19 @@
       />
 
       <!-- Typing Indicator -->
-      <div v-if="typingUser" class="flex items-center gap-2 py-1 px-2 text-xs text-slate-400 italic">
+      <div v-if="typingUser" class="flex items-center gap-2 py-2 px-4 text-xs text-slate-400 italic">
         <div class="flex gap-1">
-          <span class="w-1.5 h-1.5 bg-rose-400 rounded-full animate-bounce"></span>
-          <span class="w-1.5 h-1.5 bg-rose-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-          <span class="w-1.5 h-1.5 bg-rose-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+          <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce"></span>
+          <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+          <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
         </div>
         <span>{{ typingUser }} กำลังพิมพ์...</span>
       </div>
     </main>
 
     <!-- Bottom Chat Input Bar -->
-    <footer class="shrink-0 p-3 sm:p-4 bg-slate-900/80 backdrop-blur-md border-t border-slate-800/80">
-      <div class="max-w-3xl mx-auto">
+    <footer class="shrink-0 p-3 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 safe-area-inset-bottom">
+      <div class="w-full max-w-4xl mx-auto">
         <ChatInput
           :disabled="isRoomDestroyed"
           @send="handleSendMessage"
