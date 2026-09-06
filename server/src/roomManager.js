@@ -162,7 +162,7 @@ export class RoomManager {
   /**
    * Adds an ephemeral message to the room buffer
    */
-  addMessage(roomId, socketId, text) {
+  addMessage(roomId, socketId, text, imageData = null) {
     const room = this.getRoom(roomId);
     if (!room) return null;
 
@@ -173,13 +173,45 @@ export class RoomManager {
       id: generateRoomId(12),
       senderId: socketId,
       senderName: user.nickname,
+      nickname: user.nickname, // For backward compatibility
       text: text,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      image: imageData ? {
+        data: imageData,
+        viewCount: 0,
+        maxViews: 2
+      } : null
     };
 
     room.messages.push(message);
     if (room.messages.length > 100) {
       room.messages.shift(); // Keep only last 100 messages in RAM
+    }
+
+    return message;
+  }
+
+  /**
+   * Increment view count for an image message
+   */
+  incrementImageView(roomId, messageId, viewerSocketId) {
+    const room = this.getRoom(roomId);
+    if (!room) return null;
+
+    const message = room.messages.find(m => m.id === messageId);
+    if (!message || !message.image) return null;
+
+    // Don't count sender's own views
+    if (message.senderId === viewerSocketId) {
+      return message;
+    }
+
+    message.image.viewCount++;
+    
+    // If max views reached, delete image data
+    if (message.image.viewCount >= message.image.maxViews) {
+      message.image.data = null;
+      message.image.expired = true;
     }
 
     return message;

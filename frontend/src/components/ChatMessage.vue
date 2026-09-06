@@ -13,23 +13,48 @@
       <span class="text-[11px] font-semibold text-rose-400">คุณ</span>
     </div>
     <div class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-4 py-2.5 max-w-[80%] break-words shadow-lg">
-      <p class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
+      <!-- Image (if present) -->
+      <div v-if="message.image" class="mb-2">
+        <div v-if="message.image.data" class="relative">
+          <img v-if="imageShown" :src="message.image.data" class="max-w-full h-auto rounded-lg" />
+          <button v-else @click="showImage" class="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+            <Eye class="w-4 h-4" />
+            <span class="text-sm">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
+          </button>
+        </div>
+        <div v-else class="text-sm text-white/60 italic">รูปภาพหายไปแล้ว (ถูกดู {{ message.image.maxViews }} ครั้ง)</div>
+      </div>
+      <p v-if="message.text" class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
     </div>
   </div>
 
   <!-- Incoming Message (Others) -->
   <div v-else class="flex flex-col items-start mb-2 px-2 select-text">
     <div class="flex items-center gap-1.5 mb-1">
-      <span class="text-[11px] font-semibold text-emerald-400">{{ message.nickname || 'Unknown' }}</span>
+      <span class="text-[11px] font-semibold text-emerald-400">{{ message.senderName || message.nickname || 'Unknown' }}</span>
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
     </div>
     <div class="bg-slate-800 border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[80%] break-words shadow-md">
-      <p class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
+      <!-- Image (if present) -->
+      <div v-if="message.image" class="mb-2">
+        <div v-if="message.image.data" class="relative">
+          <img v-if="imageShown" :src="message.image.data" class="max-w-full h-auto rounded-lg" />
+          <button v-else @click="showImage" class="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+            <Eye class="w-4 h-4" />
+            <span class="text-sm">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
+          </button>
+        </div>
+        <div v-else class="text-sm text-slate-400 italic">รูปภาพหายไปแล้ว (ถูกดู {{ message.image.maxViews }} ครั้ง)</div>
+      </div>
+      <p v-if="message.text && message.text !== '📷 รูปภาพ'" class="text-[15px] leading-relaxed whitespace-pre-wrap">{{ message.text }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { Eye } from 'lucide-vue-next';
+
 const props = defineProps({
   message: {
     type: Object,
@@ -41,11 +66,21 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['viewImage']);
+
 const isMe = props.message.senderId === props.currentSocketId;
+const imageShown = ref(false);
 
 const formatTime = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(timestamp);
   return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+};
+
+const showImage = () => {
+  imageShown.value = true;
+  if (!isMe && props.message.image?.data) {
+    emit('viewImage', props.message.id);
+  }
 };
 </script>

@@ -95,7 +95,7 @@ export function setupWebSocket(httpServer) {
     // 3. Send Message
     socket.on('send_message', (data, callback) => {
       try {
-        safeLog.info('Received send_message event', { socketId: socket.id, roomId: data?.roomId });
+        safeLog.info('Received send_message event', { socketId: socket.id, roomId: data?.roomId, hasImage: !!data?.image });
         
         // Rate limiting check
         if (rateLimiter.isRateLimited(socket.id)) {
@@ -105,17 +105,31 @@ export function setupWebSocket(httpServer) {
           return;
         }
 
-        const { roomId, text } = data || {};
-        const validation = validateMessage(text);
-        if (!validation.valid) {
-          safeLog.warn('Invalid message', { socketId: socket.id, error: validation.error });
+        const { roomId, text, image } = data || {};
+        
+        // Validate text if present
+        if (text && text.trim()) {
+          const validation = validateMessage(text);
+          if (!validation.valid) {
+            safeLog.warn('Invalid message', { socketId: socket.id, error: validation.error });
+            if (typeof callback === 'function') {
+              callback({ success: false, error: validation.error });
+            }
+            return;
+          }
+        }
+
+        // Validate image size (max 5MB base64)
+        if (image && image.length > 5 * 1024 * 1024) {
           if (typeof callback === 'function') {
-            callback({ success: false, error: validation.error });
+            callback({ success: false, error: 'Image too large (max 5MB)' });
           }
           return;
         }
 
-        const message = roomManager.addMessage(roomId, socket.id, validation.text);
+        const messageText = text?.trim() || (image ? '📷 รูปภาพ' : '');
+        const message = roomManager.addMessage(roomId, socket.id, messageText, image);
+        
         if (!message) {
           safeLog.warn('Failed to add message', { socketId: socket.id, roomId });
           if (typeof callback === 'function') {
@@ -135,6 +149,41 @@ export function setupWebSocket(httpServer) {
         safeLog.error('Error sending message', err);
         if (typeof callback === 'function') {
           callback({ success: false, error: 'Could not send message' });
+        }
+      }
+    });
+
+    // 3b. View Image
+    socket.on('view_image', (data, callback) => {
+      try {
+        const { roomId, messageId } = data || {};
+        const message = roomManager.incrementImageView(roomId, messageId, socket.id);
+        
+        if (!message) {
+          if (typeof callback === 'function') {
+            callback({ success: false, error: 'Message not found' });
+          }
+          return;
+        }
+
+        // Broadcast view count update to room
+        io.to(roomId).emit('image_viewed', {
+          messageId: message.id,
+          viewCount: message.image?.viewCount || 0,
+          expired: message.image?.expired || false
+        });
+
+        if (typeof callback === 'function') {
+          callback({ 
+            success: true, 
+            viewCount: message.image?.viewCount || 0,
+            expired: message.image?.expired || false
+          });
+        }
+      } catch (err) {
+        safeLog.error('Error viewing image', err);
+        if (typeof callback === 'function') {
+          callback({ success: false, error: 'Could not view image' });
         }
       }
     });

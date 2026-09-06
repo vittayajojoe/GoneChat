@@ -138,6 +138,7 @@
         :key="msg.id || msg.timestamp"
         :message="msg"
         :currentSocketId="currentSocketId"
+        @viewImage="handleViewImage"
       />
 
       <!-- Typing Indicator -->
@@ -322,6 +323,18 @@ const setupSocketListeners = (socket) => {
     userList.value = [];
     wsService.disconnect();
   });
+
+  // Image viewed event
+  socket.on('image_viewed', (data) => {
+    const msg = messages.value.find(m => m.id === data.messageId);
+    if (msg && msg.image) {
+      msg.image.viewCount = data.viewCount;
+      msg.image.expired = data.expired;
+      if (data.expired) {
+        msg.image.data = null;
+      }
+    }
+  });
 };
 
 const joinCurrentRoom = async (nicknameToUse) => {
@@ -373,14 +386,29 @@ onUnmounted(() => {
   messages.value = [];
 });
 
-const handleSendMessage = async (text) => {
+const handleSendMessage = async (data) => {
   if (isRoomDestroyed.value) return;
+  
+  const { text, image } = data;
   const res = await wsService.sendMessage({
     roomId: roomId.value,
-    text
+    text,
+    image
   });
+  
   if (res && !res.success) {
     alert(res.error || 'ส่งข้อความไม่สำเร็จ');
+  }
+};
+
+const handleViewImage = async (messageId) => {
+  const res = await wsService.viewImage({
+    roomId: roomId.value,
+    messageId
+  });
+  
+  if (!res?.success) {
+    console.error('Failed to view image:', res?.error);
   }
 };
 

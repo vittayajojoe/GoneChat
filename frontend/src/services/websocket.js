@@ -139,9 +139,14 @@ class WebSocketService {
     return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken }, 10000);
   }
 
-  sendMessage({ roomId, text }) {
-    console.log('[WebSocket] Sending message:', { roomId, text });
-    return this.emitWithTimeout('send_message', { roomId, text }, 6000);
+  sendMessage({ roomId, text, image }) {
+    console.log('[WebSocket] Sending message:', { roomId, hasText: !!text, hasImage: !!image });
+    return this.emitWithTimeout('send_message', { roomId, text, image }, 10000);
+  }
+
+  viewImage({ roomId, messageId }) {
+    console.log('[WebSocket] Viewing image:', { roomId, messageId });
+    return this.emitWithTimeout('view_image', { roomId, messageId }, 6000);
   }
 
   sendTyping({ roomId, isTyping }) {
