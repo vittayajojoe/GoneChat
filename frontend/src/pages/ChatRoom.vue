@@ -269,9 +269,12 @@ const scrollToBottom = () => {
 
 const setupSocketListeners = (socket) => {
   currentSocketId.value = socket.id;
+  console.log('[ChatRoom] Current socket ID:', socket.id);
 
   // New incoming message
   socket.on('new_message', (msg) => {
+    console.log('[ChatRoom] New message:', msg);
+    console.log('[ChatRoom] Is my message?', msg.senderId === currentSocketId.value);
     messages.value.push(msg);
     scrollToBottom();
   });
