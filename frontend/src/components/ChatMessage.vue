@@ -7,7 +7,7 @@
   </div>
 
   <!-- Outgoing Message (Me) -->
-  <div v-else-if="isMe" class="flex flex-col items-end mb-2 px-2 select-text w-full">
+  <div v-else-if="isMe.value" class="flex flex-col items-end mb-2 px-2 select-text w-full">
     <div class="flex items-center gap-1.5 mb-1">
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
       <span class="text-[11px] font-semibold text-rose-400">คุณ</span>
@@ -15,14 +15,19 @@
     <div class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-3 py-2 max-w-[85%] break-words shadow-lg">
       <!-- Image (if present) -->
       <div v-if="message.image" class="mb-2">
-        <div v-if="message.image.data" class="relative">
-          <img v-if="imageShown" :src="message.image.data" class="max-w-full max-h-64 h-auto rounded-lg object-contain" />
+        <div v-if="message.image.data && !message.image.expired" class="relative">
+          <div v-if="imageShown" class="relative">
+            <img :src="message.image.data" class="max-w-full max-h-64 h-auto rounded-lg object-contain" />
+            <button @click="hideImage" class="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full transition-colors">
+              <X class="w-3 h-3" />
+            </button>
+          </div>
           <button v-else @click="showImage" class="flex items-center gap-2 px-2.5 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm">
             <Eye class="w-4 h-4" />
             <span class="text-xs">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
           </button>
         </div>
-        <div v-else class="text-xs text-white/60 italic">รูปภาพหายไปแล้ว</div>
+        <div v-else class="text-xs text-white/60 italic">รูปภาพหายไปแล้ว (ดูครบ {{ message.image.maxViews }} ครั้งแล้ว)</div>
       </div>
       <p v-if="message.text" class="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{{ message.text }}</p>
     </div>
@@ -37,14 +42,19 @@
     <div class="bg-slate-800 border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-md px-3 py-2 max-w-[85%] break-words shadow-md">
       <!-- Image (if present) -->
       <div v-if="message.image" class="mb-2">
-        <div v-if="message.image.data" class="relative">
-          <img v-if="imageShown" :src="message.image.data" class="max-w-full max-h-64 h-auto rounded-lg object-contain" />
+        <div v-if="message.image.data && !message.image.expired" class="relative">
+          <div v-if="imageShown" class="relative">
+            <img :src="message.image.data" class="max-w-full max-h-64 h-auto rounded-lg object-contain" />
+            <button @click="hideImage" class="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full transition-colors">
+              <X class="w-3 h-3" />
+            </button>
+          </div>
           <button v-else @click="showImage" class="flex items-center gap-2 px-2.5 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm">
             <Eye class="w-4 h-4" />
             <span class="text-xs">คลิกเพื่อดูรูป ({{ message.image.viewCount || 0 }}/{{ message.image.maxViews }})</span>
           </button>
         </div>
-        <div v-else class="text-xs text-slate-400 italic">รูปภาพหายไปแล้ว</div>
+        <div v-else class="text-xs text-slate-400 italic">รูปภาพหายไปแล้ว (ดูครบ {{ message.image.maxViews }} ครั้งแล้ว)</div>
       </div>
       <p v-if="message.text && message.text !== '📷 รูปภาพ'" class="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{{ message.text }}</p>
     </div>
@@ -52,8 +62,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Eye } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Eye, X } from 'lucide-vue-next';
 
 const props = defineProps({
   message: {
@@ -68,7 +78,17 @@ const props = defineProps({
 
 const emit = defineEmits(['viewImage']);
 
-const isMe = props.message.senderId === props.currentSocketId;
+// Use computed to make isMe reactive
+const isMe = computed(() => {
+  const match = props.message.senderId === props.currentSocketId;
+  console.log('[ChatMessage] isMe check:', {
+    senderId: props.message.senderId,
+    currentSocketId: props.currentSocketId,
+    isMe: match
+  });
+  return match;
+});
+
 const imageShown = ref(false);
 
 const formatTime = (timestamp) => {
@@ -79,8 +99,12 @@ const formatTime = (timestamp) => {
 
 const showImage = () => {
   imageShown.value = true;
-  if (!isMe && props.message.image?.data) {
+  if (!isMe.value && props.message.image?.data) {
     emit('viewImage', props.message.id);
   }
+};
+
+const hideImage = () => {
+  imageShown.value = false;
 };
 </script>
