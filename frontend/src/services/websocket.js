@@ -213,11 +213,11 @@ class WebSocketService {
     return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken, clientId }, 10000);
   }
 
-  sendMessage({ roomId, text, image }) {
+  sendMessage({ roomId, text, image, tempId }) {
     console.log('[WebSocket] Sending message:', { roomId, hasText: !!text, hasImage: !!image });
     // Increase timeout for images
     const timeout = image ? 30000 : 10000;
-    return this.emitWithTimeout('send_message', { roomId, text, image }, timeout);
+    return this.emitWithTimeout('send_message', { roomId, text, image, tempId }, timeout);
   }
 
   viewImage({ roomId, messageId }) {

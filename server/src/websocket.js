@@ -105,7 +105,7 @@ export function setupWebSocket(httpServer) {
           return;
         }
 
-        const { roomId, text, image } = data || {};
+        const { roomId, text, image, tempId } = data || {};
         
         // Validate text if present
         if (text && text.trim()) {
@@ -138,9 +138,11 @@ export function setupWebSocket(httpServer) {
           return;
         }
 
-        // Broadcast message to everyone in room (including sender)
+        // Broadcast message to everyone in room (including sender).
+        // tempId lets the sender's own client reconcile its optimistic local
+        // echo instead of rendering a duplicate bubble; it's not persisted.
         safeLog.info('Broadcasting message', { roomId, messageId: message.id, recipients: io.sockets.adapter.rooms.get(roomId)?.size });
-        io.to(roomId).emit('new_message', message);
+        io.to(roomId).emit('new_message', tempId ? { ...message, tempId } : message);
 
         if (typeof callback === 'function') {
           callback({ success: true, messageId: message.id });

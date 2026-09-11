@@ -168,10 +168,6 @@ const handleCreate = async () => {
       sessionStorage.setItem('preferred_nickname', nickname.value.trim());
 
       console.log('[CreateRoom] Navigating to room:', res.roomId);
-      
-      // Wait a bit before navigating to ensure backend is ready
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       router.push(`/r/${res.roomId}`);
     } else {
       errorMessage.value = res?.error || 'เกิดข้อผิดพลาดในการสร้างห้อง กรุณาลองใหม่อีกครั้ง';

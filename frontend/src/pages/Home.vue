@@ -63,6 +63,42 @@
         <ArrowRight class="w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
       </router-link>
 
+      <!-- Recent Rooms — quick re-entry into rooms you've left but haven't expired/burned -->
+      <div v-if="recentRooms.length > 0" class="space-y-2 pt-2">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">ห้องล่าสุดของคุณ</span>
+          <span class="text-[10px] text-slate-500">เก็บไว้ในเครื่องนี้เท่านั้น</span>
+        </div>
+        <div class="space-y-2">
+          <div
+            v-for="room in recentRooms"
+            :key="room.roomId"
+            class="w-full p-3 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-2 transition-colors group"
+          >
+            <button type="button" @click="rejoinRecentRoom(room)" class="flex-1 min-w-0 flex items-center gap-3 text-left">
+              <div class="p-2 bg-slate-800 rounded-xl shrink-0">
+                <MessageCircle class="w-4 h-4 text-rose-400" />
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-slate-200 truncate flex items-center gap-1.5">
+                  <span class="truncate">{{ room.nickname || 'ห้องแชท' }}</span>
+                  <span v-if="room.isHost" class="shrink-0 px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase bg-amber-950/80 text-amber-400 border border-amber-800/60">หัวหน้าห้อง</span>
+                </div>
+                <div class="text-[11px] text-slate-500 font-mono truncate">{{ room.roomId }} &bull; {{ formatRemaining(room.expiresAt) }}</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              @click="removeRecentRoom(room.roomId)"
+              class="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 opacity-0 group-hover:opacity-100 transition-all"
+              title="ลบออกจากรายการ"
+            >
+              <X class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Trust & Privacy Grid -->
       <div class="grid grid-cols-2 gap-3 pt-4">
         <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-1">
@@ -119,9 +155,39 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Flame, PlusCircle, LogIn, ArrowRight, Cpu, Clock, ShieldCheck, Settings } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { Flame, PlusCircle, LogIn, ArrowRight, Cpu, Clock, ShieldCheck, Settings, MessageCircle, X } from 'lucide-vue-next';
 import ServerSettingsModal from '../components/ServerSettingsModal.vue';
+import { getRecentRooms, forgetRoom } from '../services/recentRooms.js';
 
+const router = useRouter();
 const showServerModal = ref(false);
+const recentRooms = ref([]);
+
+onMounted(() => {
+  recentRooms.value = getRecentRooms();
+});
+
+const formatRemaining = (expiresAt) => {
+  const ms = expiresAt - Date.now();
+  if (ms <= 0) return 'หมดเวลาแล้ว';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'เหลือไม่ถึง 1 นาที';
+  if (mins < 60) return `เหลือ ${mins} นาที`;
+  const hours = Math.floor(mins / 60);
+  return `เหลือ ${hours} ชั่วโมง ${mins % 60} นาที`;
+};
+
+const rejoinRecentRoom = (room) => {
+  if (room.nickname) {
+    sessionStorage.setItem('preferred_nickname', room.nickname);
+  }
+  router.push(`/r/${room.roomId}`);
+};
+
+const removeRecentRoom = (roomId) => {
+  forgetRoom(roomId);
+  recentRooms.value = recentRooms.value.filter(r => r.roomId !== roomId);
+};
 </script>

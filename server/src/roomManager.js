@@ -167,10 +167,8 @@ export class RoomManager {
       }
     }
 
-    // If room is empty, schedule auto-destruction
-    if (room.users.size === 0) {
-      this.ttlManager.scheduleEmptyRoomDestruction(roomId);
-    }
+    // Room stays alive while empty — it is only ever destroyed by its TTL
+    // expiring or an explicit burn, so someone can leave and come back later.
 
     return {
       roomId,

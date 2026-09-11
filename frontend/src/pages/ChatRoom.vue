@@ -225,6 +225,7 @@ import {
 } from 'lucide-vue-next';
 import { wsService } from '../services/websocket.js';
 import { generateRandomNickname } from '../services/nickname.js';
+import { rememberRoom, forgetRoom } from '../services/recentRooms.js';
 import RoomTimer from '../components/RoomTimer.vue';
 import ChatMessage from '../components/ChatMessage.vue';
 import ChatInput from '../components/ChatInput.vue';
@@ -305,6 +306,15 @@ const setupSocketListeners = (socket) => {
 
   // New incoming message
   socket.on('new_message', (msg) => {
+    // If this is the server's confirmation of our own optimistic local echo,
+    // swap it in place instead of appending a second bubble.
+    if (msg.tempId) {
+      const pendingIndex = messages.value.findIndex(m => m.tempId === msg.tempId);
+      if (pendingIndex !== -1) {
+        messages.value.splice(pendingIndex, 1, msg);
+        return;
+      }
+    }
     // Prevent duplicate messages
     if (messages.value.some(m => m.id === msg.id)) return;
     messages.value.push(msg);
@@ -356,6 +366,7 @@ const setupSocketListeners = (socket) => {
     // Wipe local memory messages immediately
     messages.value = [];
     userList.value = [];
+    forgetRoom(roomId.value);
   });
 
   // Image viewed event
@@ -394,6 +405,7 @@ const handleReconnect = async (socket) => {
     console.log('[ChatRoom] Auto-rejoin successful');
     roomInfo.value = res;
     userList.value = res.users || [];
+    rememberRoom({ roomId: roomId.value, nickname, expiresAt: res.expiresAt, isHost: res.isHost });
     // Don't replace messages — keep existing local messages + merge server's recent
     if (res.recentMessages && res.recentMessages.length > 0) {
       const existingIds = new Set(messages.value.map(m => m.id));
@@ -471,6 +483,7 @@ const joinCurrentRoom = async (nicknameToUse, retryCount = 0) => {
       joinedNickname = nicknameToUse; // Store for auto-rejoin
       roomInfo.value = res;
       userList.value = res.users || [];
+      rememberRoom({ roomId: roomId.value, nickname: nicknameToUse, expiresAt: res.expiresAt, isHost: res.isHost });
       if (res.recentMessages && res.recentMessages.length > 0) {
         messages.value = [...res.recentMessages];
       }
@@ -490,6 +503,11 @@ const joinCurrentRoom = async (nicknameToUse, retryCount = 0) => {
       isRoomDestroyed.value = true;
       destructionReason.value = 'error';
       destructionMessage.value = res?.error || 'ไม่พบห้องนี้ หรือห้องอาจหมดอายุ/ถูกทำลายไปแล้ว';
+      // Room genuinely doesn't exist (not just a network hiccup or a full
+      // room, which may free up later) — drop it from the "recent rooms" list.
+      if (res?.error?.includes('expired') || res?.error?.includes('does not exist')) {
+        forgetRoom(roomId.value);
+      }
     }
   } catch (err) {
     console.error('[ChatRoom] Exception during join:', err);
@@ -544,15 +562,34 @@ onUnmounted(() => {
 
 const handleSendMessage = async (data) => {
   if (isRoomDestroyed.value) return;
-  
+
   const { text, image } = data;
+  const tempId = `local_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+  // Render immediately instead of waiting on the round trip — the message
+  // still gets reconciled with (or rolled back by) the server's response.
+  messages.value.push({
+    id: tempId,
+    tempId,
+    senderId: currentClientId.value,
+    senderName: joinedNickname,
+    nickname: joinedNickname,
+    text,
+    timestamp: Date.now(),
+    image: image ? { data: image, viewCount: 0, maxViews: 2 } : null,
+    pending: true
+  });
+  scrollToBottom();
+
   const res = await wsService.sendMessage({
     roomId: roomId.value,
     text,
-    image
+    image,
+    tempId
   });
-  
+
   if (res && !res.success) {
+    messages.value = messages.value.filter(m => m.tempId !== tempId);
     alert(res.error || 'ส่งข้อความไม่สำเร็จ');
   }
 };
@@ -598,6 +635,7 @@ const handleRoomExpired = () => {
   destructionMessage.value = '💨 ห้องนี้หมดอายุตามเวลาที่กำหนดและสลายตัวไปแล้ว';
   messages.value = [];
   userList.value = [];
+  forgetRoom(roomId.value);
 };
 
 const handleExit = async () => {

@@ -12,7 +12,10 @@
       <span class="text-[10px] text-slate-500 font-mono">{{ formatTime(message.timestamp) }}</span>
       <span class="text-[11px] font-semibold text-rose-400">คุณ</span>
     </div>
-    <div class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-3 py-2 max-w-[85%] break-words shadow-lg">
+    <div
+      class="bg-gradient-to-br from-rose-600 to-rose-700 text-white rounded-2xl rounded-tr-md px-3 py-2 max-w-[85%] break-words shadow-lg transition-opacity"
+      :class="{ 'opacity-60': message.pending }"
+    >
       <!-- Image (if present) -->
       <div v-if="message.image" class="mb-2">
         <div v-if="message.image.data && !message.image.expired" class="relative">
