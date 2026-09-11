@@ -434,27 +434,27 @@ const joinCurrentRoom = async (nicknameToUse, retryCount = 0) => {
     // Register reconnect handler for auto-rejoin
     wsService.onReconnect(handleReconnect);
 
-    // Wait for socket to connect with longer timeout
+    // Wait for socket to connect. Timeout is generous (not just a first
+    // connect_error) because a backend that's been idle (e.g. Render's free
+    // tier) can take up to ~45s to wake up — socket.io's own `reconnection`
+    // setting keeps retrying underneath us during that window, which is
+    // exactly what we want; bailing out on the first connect_error would
+    // just abandon a connection attempt that was about to succeed.
     if (!socket.connected) {
       console.log('[ChatRoom] Waiting for socket connection...');
       await new Promise((resolve, reject) => {
         if (socket.connected) {
           resolve();
-        } else {
-          const timeout = setTimeout(() => {
-            reject(new Error('Connection timeout'));
-          }, 10000); // 10 second timeout
-          
-          socket.once('connect', () => {
-            clearTimeout(timeout);
-            resolve();
-          });
-          
-          socket.once('connect_error', (err) => {
-            clearTimeout(timeout);
-            reject(err);
-          });
+          return;
         }
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection timeout'));
+        }, 45000);
+
+        socket.once('connect', () => {
+          clearTimeout(timeout);
+          resolve();
+        });
       }).catch(err => {
         console.error('[ChatRoom] Connection failed:', err);
         throw err;

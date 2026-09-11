@@ -25,6 +25,21 @@ class WebSocketService {
     return id;
   }
 
+  /**
+   * Fire-and-forget ping to wake up a sleeping backend (e.g. Render's free
+   * tier spins the server down after ~15 minutes idle and can take 30-60s
+   * to boot back up). Call this as early as possible — ideally on app load,
+   * well before the user actually tries to create/join a room — so the
+   * cold-start delay happens in the background instead of as a timeout.
+   */
+  wakeBackend() {
+    const backendUrl = this.getBackendUrl();
+    if (!backendUrl) return;
+    fetch(`${backendUrl}/health`).catch(() => {
+      // Ignore — this is just a warm-up ping, the real request will retry properly.
+    });
+  }
+
   setBackendUrl(url) {
     const clean = url ? url.trim().replace(/\/+$/, '') : '';
     if (clean) {
@@ -158,12 +173,15 @@ class WebSocketService {
   }
 
   /**
-   * Create room via HTTP POST with fast timeout
+   * Create room via HTTP POST. Timeout is generous (not "fast") because a
+   * backend that's been idle (e.g. Render's free tier) can take 30-60s to
+   * wake up on the first request — wakeBackend() is called on app load to
+   * make that rare in practice, but this still needs to survive it when it happens.
    */
   async createRoomHttp({ ttl, nickname, maxParticipants }) {
     const backendUrl = this.getBackendUrl();
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       const res = await fetch(`${backendUrl}/api/room/create`, {
@@ -192,7 +210,7 @@ class WebSocketService {
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        return { success: false, error: 'เชื่อมต่อไปยัง Backend ไม่สำเร็จ (หมดเวลาการเชื่อมต่อ)' };
+        return { success: false, error: 'เชื่อมต่อไปยัง Backend ไม่สำเร็จ (หมดเวลาการเชื่อมต่อ) เซิร์ฟเวอร์อาจกำลังตื่นจากโหมดพัก ลองใหม่อีกครั้งในอีกสักครู่' };
       }
       // If no backend configured or network error
       return {
@@ -210,7 +228,9 @@ class WebSocketService {
   joinRoom({ roomId, nickname, ownerToken }) {
     const clientId = this.getClientId();
     console.log('[WebSocket] Joining room:', { roomId, nickname, hasOwnerToken: !!ownerToken, clientId });
-    return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken, clientId }, 10000);
+    // Generous timeout: right after the socket connects to a backend that
+    // just woke up from idle, the first request can still lag a bit.
+    return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken, clientId }, 20000);
   }
 
   sendMessage({ roomId, text, image, tempId }) {
