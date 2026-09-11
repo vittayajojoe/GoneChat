@@ -108,9 +108,20 @@
         GoneChat MVP &bull; คุยเสร็จ หายไป
       </p>
     </footer>
+
+    <!-- Server Settings Modal -->
+    <ServerSettingsModal
+      :show="showServerModal"
+      @close="showServerModal = false"
+      @saved="showServerModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { Flame, PlusCircle, LogIn, ArrowRight, Cpu, Clock, ShieldCheck } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { Flame, PlusCircle, LogIn, ArrowRight, Cpu, Clock, ShieldCheck, Settings } from 'lucide-vue-next';
+import ServerSettingsModal from '../components/ServerSettingsModal.vue';
+
+const showServerModal = ref(false);
 </script>

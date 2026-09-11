@@ -56,13 +56,13 @@ export function setupWebSocket(httpServer) {
     // 2. Join Room
     socket.on('join_room', (data, callback) => {
       try {
-        const { roomId, nickname, ownerToken } = data || {};
+        const { roomId, nickname, ownerToken, clientId } = data || {};
         if (!roomId) {
           if (typeof callback === 'function') callback({ success: false, error: 'Room ID is required' });
           return;
         }
 
-        const joinResult = roomManager.joinRoom(roomId, socket.id, nickname, ownerToken);
+        const joinResult = roomManager.joinRoom(roomId, socket.id, nickname, ownerToken, clientId);
         if (!joinResult.success) {
           if (typeof callback === 'function') callback({ success: false, error: joinResult.error });
           return;

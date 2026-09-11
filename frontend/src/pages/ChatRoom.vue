@@ -137,7 +137,7 @@
         v-for="msg in messages"
         :key="msg.id || msg.timestamp"
         :message="msg"
-        :currentSocketId="currentSocketId"
+        :currentUserId="currentClientId"
         @viewImage="handleViewImage"
       />
 
@@ -167,7 +167,7 @@
     <UserList
       :show="showUserList"
       :users="userList"
-      :currentSocketId="currentSocketId"
+      :currentUserId="currentClientId"
       @close="showUserList = false"
     />
 
@@ -241,6 +241,9 @@ const messages = ref([]);
 const userList = ref([]);
 const roomInfo = ref(null);
 const currentSocketId = ref('');
+// Stable per-tab identity (survives reconnects/reloads) used to decide
+// which messages/users are "me" — socket.id changes on every reconnect.
+const currentClientId = ref(wsService.getClientId());
 const isConnected = ref(false);
 const typingUser = ref(null);
 let typingTimeout = null;

@@ -67,13 +67,33 @@ export class RoomManager {
   /**
    * Adds a user to a room
    */
-  joinRoom(roomId, socketId, rawNickname, clientOwnerToken = null) {
+  joinRoom(roomId, socketId, rawNickname, clientOwnerToken = null, clientId = null) {
     const room = this.getRoom(roomId);
     if (!room) {
       return { success: false, error: 'Room does not exist or has expired' };
     }
 
-    if (room.users.size >= room.maxParticipants) {
+    const stableId = clientId || socketId;
+
+    // If this client was already in the room (e.g. page reload / socket
+    // reconnect), replace its stale entry instead of counting it as a new
+    // participant — otherwise a reload could wrongly hit "room is full".
+    let existingEntry = null;
+    for (const [existingSocketId, existingUser] of room.users) {
+      if (existingUser.clientId === stableId) {
+        existingEntry = [existingSocketId, existingUser];
+        break;
+      }
+    }
+
+    if (existingEntry) {
+      const [oldSocketId] = existingEntry;
+      room.users.delete(oldSocketId);
+      this.socketToRoom.delete(oldSocketId);
+      if (room.ownerSocketId === oldSocketId) {
+        room.ownerSocketId = socketId;
+      }
+    } else if (room.users.size >= room.maxParticipants) {
       return { success: false, error: 'Room is full' };
     }
 
@@ -81,15 +101,18 @@ export class RoomManager {
     this.ttlManager.cancelEmptyRoomDestruction(roomId);
 
     const nickname = sanitizeNickname(rawNickname);
-    const isHost = clientOwnerToken === room.ownerToken || room.users.size === 0;
+    const isHost = existingEntry
+      ? existingEntry[1].isHost
+      : (clientOwnerToken === room.ownerToken || room.users.size === 0);
     if (isHost && !room.ownerSocketId) {
       room.ownerSocketId = socketId;
     }
 
     const user = {
       socketId,
+      clientId: stableId,
       nickname,
-      joinedAt: Date.now(),
+      joinedAt: existingEntry ? existingEntry[1].joinedAt : Date.now(),
       isHost
     };
 
@@ -110,6 +133,7 @@ export class RoomManager {
         userCount: room.users.size,
         users: Array.from(room.users.values()).map(u => ({
           socketId: u.socketId,
+          clientId: u.clientId,
           nickname: u.nickname,
           isHost: u.isHost
         })),
@@ -153,6 +177,7 @@ export class RoomManager {
       leavingUser,
       remainingUsers: Array.from(room.users.values()).map(u => ({
         socketId: u.socketId,
+        clientId: u.clientId,
         nickname: u.nickname,
         isHost: u.isHost
       }))
@@ -171,7 +196,7 @@ export class RoomManager {
 
     const message = {
       id: generateRoomId(12),
-      senderId: socketId,
+      senderId: user.clientId,
       senderName: user.nickname,
       nickname: user.nickname, // For backward compatibility
       text: text,
@@ -201,8 +226,12 @@ export class RoomManager {
     const message = room.messages.find(m => m.id === messageId);
     if (!message || !message.image) return null;
 
-    // Don't count sender's own views
-    if (message.senderId === viewerSocketId) {
+    // Don't count sender's own views (compare stable clientId, not the
+    // ephemeral socketId, so a reload doesn't let the sender re-view their
+    // own image as if they were someone else)
+    const viewer = room.users.get(viewerSocketId);
+    const viewerClientId = viewer ? viewer.clientId : viewerSocketId;
+    if (message.senderId === viewerClientId) {
       return message;
     }
 

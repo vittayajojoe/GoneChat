@@ -10,6 +10,21 @@ class WebSocketService {
     return localStorage.getItem('gonechat_backend_url') || import.meta.env.VITE_BACKEND_URL || '';
   }
 
+  /**
+   * A stable per-tab identity that survives socket reconnects/page reloads
+   * (sessionStorage persists across a reload, unlike the ephemeral socket.id).
+   * Used to keep "is this message mine" correct even after the underlying
+   * socket.id changes.
+   */
+  getClientId() {
+    let id = sessionStorage.getItem('gonechat_client_id');
+    if (!id) {
+      id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      sessionStorage.setItem('gonechat_client_id', id);
+    }
+    return id;
+  }
+
   setBackendUrl(url) {
     const clean = url ? url.trim().replace(/\/+$/, '') : '';
     if (clean) {
@@ -193,8 +208,9 @@ class WebSocketService {
   }
 
   joinRoom({ roomId, nickname, ownerToken }) {
-    console.log('[WebSocket] Joining room:', { roomId, nickname, hasOwnerToken: !!ownerToken });
-    return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken }, 10000);
+    const clientId = this.getClientId();
+    console.log('[WebSocket] Joining room:', { roomId, nickname, hasOwnerToken: !!ownerToken, clientId });
+    return this.emitWithTimeout('join_room', { roomId, nickname, ownerToken, clientId }, 10000);
   }
 
   sendMessage({ roomId, text, image }) {

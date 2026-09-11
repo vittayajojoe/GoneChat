@@ -21,7 +21,7 @@
             <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20"></div>
             <span class="text-sm font-medium text-slate-200">
               {{ u.nickname }}
-              <span v-if="u.socketId === currentSocketId" class="text-xs text-rose-400 font-normal"> (คุณ)</span>
+              <span v-if="u.clientId === currentUserId" class="text-xs text-rose-400 font-normal"> (คุณ)</span>
             </span>
           </div>
 
@@ -58,7 +58,7 @@ defineProps({
     type: Array,
     default: () => []
   },
-  currentSocketId: {
+  currentUserId: {
     type: String,
     required: true
   }

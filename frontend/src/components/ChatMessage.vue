@@ -70,7 +70,7 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  currentSocketId: {
+  currentUserId: {
     type: String,
     required: true
   }
@@ -80,7 +80,7 @@ const emit = defineEmits(['viewImage']);
 
 // Use computed to make isMe reactive
 const isMe = computed(() => {
-  return props.message.senderId === props.currentSocketId;
+  return props.message.senderId === props.currentUserId;
 });
 
 const imageShown = ref(false);
